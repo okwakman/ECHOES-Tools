@@ -3,6 +3,7 @@
  */
 package org.csuc.deserialize;
 
+import gencat.cat.RDF;
 import isbn._1_931666_22_9.Ead;
 import nl.memorix_maior.api.rest._3.Memorix;
 import nl.mindbus.a2a.A2AType;
@@ -269,6 +270,7 @@ public class JaxbUnmarshal {
 			if(Objects.equals(type, Ead.class)) list.add(new StreamSource(Ead.class.getClassLoader().getResourceAsStream("apeEAD.xsd")));
 			if(Objects.equals(type, Memorix.class)) list.add(new StreamSource(Memorix.class.getClassLoader().getResourceAsStream("MRX-API-ANY.xsd")));
 			if(Objects.equals(type, OAIPMHtype.class)) list.add(new StreamSource(OAIPMHtype.class.getClassLoader().getResourceAsStream("OAI-PMH.xsd")));
+			if(Objects.equals(type, RDF.class)) list.add(new StreamSource(RDF.class.getClassLoader().getResourceAsStream("GENE.xsd")));
 		});
 
 		Source[] schemaFiles = list.toArray(new Source[list.size()]);

@@ -1,0 +1,8 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.gencat.cat/">
+    <xs:simpleType name="TipologiaArquitectonicType">
+        <xs:restriction base="xs:string">
+
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

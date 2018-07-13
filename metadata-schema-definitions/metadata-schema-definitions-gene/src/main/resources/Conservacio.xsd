@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://www.gencat.cat/"
+        xmlns:gene="http://www.gencat.cat/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+    <xs:include schemaLocation="ConservacioGlobalArqueologic.xsd"/>
+    <xs:include schemaLocation="ConservacioGlobalArquitectonic.xsd"/>
+
+    <xs:annotation>
+        <xs:documentation>
+            GENE First Implementation Schema: Contextual elements (vocabulary terms)
+        </xs:documentation>
+    </xs:annotation>
+
+    <xs:element name="ConservacioType">
+        <xs:complexType>
+            <xs:annotation>
+                <xs:documentation>
+                    blab bla bla
+                </xs:documentation>
+            </xs:annotation>
+            <xs:complexContent>
+                <xs:extension base="gene:SequenceNoticiaConservacioType">
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="SequenceNoticiaConservacioType">
+        <xs:complexContent>
+            <xs:extension base="rdf:AboutType">
+                <xs:sequence>
+                    <xs:element name="conservacioGlobal" minOccurs="0">
+                        <xs:complexType>
+                            <xs:choice>
+                                <xs:element name="conservacioGlobalArqueologic" type="gene:ConservacioGlobalArqueologicType"/>
+                                <xs:element name="conservacioGlobalArquitectonic" type="gene:ConservacioGlobalArquitectonicType"/>
+                            </xs:choice>
+                        </xs:complexType>
+                    </xs:element>
+
+                    <xs:element name="conservacioEstat" minOccurs="0">
+                        <xs:complexType>
+                            <xs:choice>
+                                <xs:element name="conservacioEstatArqueologic" type="gene:ConservacioGlobalArqueologicType"/>
+                                <xs:element name="conservacioEstatArquitectonic" type="gene:ConservacioGlobalArquitectonicType"/>
+                            </xs:choice>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="conservacioComentari" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+
+</xs:schema>

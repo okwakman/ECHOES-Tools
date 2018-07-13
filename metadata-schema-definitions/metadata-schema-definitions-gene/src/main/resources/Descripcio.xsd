@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://www.gencat.cat/"
+        xmlns:gene="http://www.gencat.cat/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+
+    <xs:annotation>
+        <xs:documentation>
+            GENE First Implementation Schema: Contextual elements (vocabulary terms)
+        </xs:documentation>
+    </xs:annotation>
+
+    <xs:element name="DescripcioType">
+        <xs:complexType>
+            <xs:annotation>
+                <xs:documentation>
+                    blab bla bla
+                </xs:documentation>
+            </xs:annotation>
+            <xs:complexContent>
+                <xs:extension base="gene:SequenceDescripcioType">
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="SequenceDescripcioType">
+        <xs:complexContent>
+            <xs:extension base="rdf:AboutType">
+                <xs:sequence>
+                    <xs:element name="descDescripcio" type="rdf:LiteralType"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+
+</xs:schema>
