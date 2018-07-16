@@ -7,8 +7,9 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="CronologiaArqueologic.xsd"/>
-    <xs:include schemaLocation="CronologiaArquitectonic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/CronologiaArqueologic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/CronologiaArquitectonic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/EstilEpoca.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
@@ -20,7 +21,7 @@
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    blab bla bla
+                    Data del bé
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>
@@ -39,6 +40,16 @@
                             <xs:choice>
                                 <xs:element name="cronologiaInicialArqueologic" type="gene:CronologiaArqueologicType"/>
                                 <xs:element name="cronologiaInicialArquitectonic" type="gene:CronologiaArquitectonicType"/>
+                                <xs:element name="cronologiaInicialGeneral" type="gene:EstilEpocaType"/>
+                            </xs:choice>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="cronologiaFinal" minOccurs="0">
+                        <xs:complexType>
+                            <xs:choice>
+                                <xs:element name="cronologiaFinalArqueologic" type="gene:CronologiaArqueologicType"/>
+                                <xs:element name="cronologiaFinalArquitectonic" type="gene:CronologiaArquitectonicType"/>
+                                <xs:element name="cronologiaFinal" type="gene:EstilEpocaType"/>
                             </xs:choice>
                         </xs:complexType>
                     </xs:element>

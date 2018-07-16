@@ -8,6 +8,9 @@
 http://jaxb2-commons.dev.java.net/namespace-prefix ">
 
     <jxb:bindings schemaLocation="GENE.xsd">
+        <jxb:bindings >
+            <jxb:globalBindings typesafeEnumMaxMembers="1024" typesafeEnumMemberName="generateName"/>
+        </jxb:bindings>
         <jxb:schemaBindings>
             <jxb:package name="gencat.cat"/>
         </jxb:schemaBindings>

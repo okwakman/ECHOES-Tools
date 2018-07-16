@@ -7,7 +7,7 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="ServeiTerritorial.xsd"/>
+    <xs:include schemaLocation="Diccionaris/ServeiTerritorial.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
@@ -19,7 +19,7 @@
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    blab bla bla
+                    Dades de localització del bé.
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>

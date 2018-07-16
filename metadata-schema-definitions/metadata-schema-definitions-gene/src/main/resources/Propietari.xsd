@@ -7,8 +7,8 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="PropietariArqueologic.xsd"/>
-    <xs:include schemaLocation="PropietariArquitectonic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/PropietariArqueologic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/PropietariArquitectonic.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
@@ -20,7 +20,7 @@
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    blab bla bla
+                    Tipus de Regim.
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>

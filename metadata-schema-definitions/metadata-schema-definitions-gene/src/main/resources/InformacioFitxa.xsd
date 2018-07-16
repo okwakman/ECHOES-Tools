@@ -7,8 +7,6 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="Diccionaris/Municipi.xsd"/>
-    <xs:include schemaLocation="Diccionaris/Comarca.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
@@ -16,26 +14,27 @@
         </xs:documentation>
     </xs:annotation>
 
-    <xs:element name="TerritoriType">
+    <xs:element name="InformacioFitxaType">
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    Conté 1 municipi i >= 1 Comarca.
+                    Metadades de la fitxa en sí mateixa.
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>
-                <xs:extension base="gene:SequenceTerritoriType">
+                <xs:extension base="gene:SequenceInformacioFitxaType">
                 </xs:extension>
             </xs:complexContent>
         </xs:complexType>
     </xs:element>
 
-    <xs:complexType name="SequenceTerritoriType">
+    <xs:complexType name="SequenceInformacioFitxaType">
         <xs:complexContent>
             <xs:extension base="rdf:AboutType">
                 <xs:sequence>
-                    <xs:element name="municipi" type="gene:MunicipiType"/>
-                    <xs:element name="comarca" type="gene:ComarcaType" maxOccurs="unbounded" />
+                    <xs:element name="autorFitxa" minOccurs="0" type="rdf:LiteralType" />
+                    <xs:element name="dataCreacioFitxa" minOccurs="0" type="xs:dateTime" />
+                    <xs:element name="dataModificacioFitxa" minOccurs="0" type="xs:dateTime" />
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>

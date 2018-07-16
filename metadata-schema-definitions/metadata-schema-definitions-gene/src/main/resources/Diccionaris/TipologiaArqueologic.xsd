@@ -1,0 +1,18 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.gencat.cat/">
+    <xs:simpleType name="TipologiaArqueologicType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Prefitxa"/>
+            <xs:enumeration value="Jaciment arqueològic"/>
+            <xs:enumeration value="Resultat negatiu total"/>
+            <xs:enumeration value="Jaciment paleontològic"/>
+            <xs:enumeration value="Jaciment subaquàtic"/>
+            <xs:enumeration value="Element"/>
+            <xs:enumeration value="Pendent revisió"/>
+            <xs:enumeration value="Guerra Civil"/>
+            <xs:enumeration value="Resultat negatiu en superfície"/>
+            <xs:enumeration value="Resultat negatiu parcial"/>
+            <xs:enumeration value="Notícia històrica"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

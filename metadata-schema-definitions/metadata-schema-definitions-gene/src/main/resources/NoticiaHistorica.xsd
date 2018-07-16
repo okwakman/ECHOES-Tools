@@ -18,7 +18,7 @@
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    blab bla bla
+                    Noticia Historica relacionada amb el bé.
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>

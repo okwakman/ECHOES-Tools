@@ -7,9 +7,10 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="ClassificacioArqueologic.xsd" />
-    <xs:include schemaLocation="ClassificacioArquitectonic.xsd" />
-    <xs:include schemaLocation="Categoria.xsd" />
+    <xs:include schemaLocation="Diccionaris/ClassificacioArqueologic.xsd" />
+    <xs:include schemaLocation="Diccionaris/ClassificacioArquitectonic.xsd" />
+    <xs:include schemaLocation="Diccionaris/Categoria.xsd" />
+    <xs:include schemaLocation="Diccionaris/AmbitProteccio.xsd" />
 
     <xs:annotation>
         <xs:documentation>
@@ -21,7 +22,7 @@
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    blab bla bla
+                    Protecció oficial assignada.
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>
@@ -36,6 +37,7 @@
             <xs:extension base="rdf:AboutType">
                 <xs:sequence>
                     <xs:element minOccurs="0" name="proteccio" type="xs:string"/>
+                    <xs:element minOccurs="0" name="ambit" type="gene:AmbitProteccioType" />
                     <xs:element minOccurs="0" name="categoria" type="gene:CategoriaType" />
                     <xs:element name="classificacio" minOccurs="0" maxOccurs="unbounded">
                         <xs:complexType>

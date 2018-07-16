@@ -1,0 +1,17 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.gencat.cat/">
+    <xs:simpleType name="PropietariArqueologicType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Pública"/>
+            <xs:enumeration value="Pública Nacional"/>
+            <xs:enumeration value="Pública Diputació"/>
+            <xs:enumeration value="Pública Municipal"/>
+            <xs:enumeration value="Pública Consell Comarcal"/>
+            <xs:enumeration value="Pública Estatal"/>
+            <xs:enumeration value="Eclesiàstica"/>
+            <xs:enumeration value="Privada"/>
+            <xs:enumeration value="Privada Institució"/>
+            <xs:enumeration value="Privada Particular"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

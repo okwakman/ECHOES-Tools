@@ -27,6 +27,7 @@
     <xs:include schemaLocation="Conservacio.xsd"/>
     <xs:include schemaLocation="Proteccio.xsd"/>
     <xs:include schemaLocation="Propietari.xsd"/>
+    <xs:include schemaLocation="InformacioFitxa.xsd"/>
 
     <xs:element name="RDF">
         <xs:complexType>
@@ -44,6 +45,7 @@
                 <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:ConservacioType"/>
                 <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:ProteccioType"/>
                 <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:PropietariType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:InformacioFitxaType"/>
 
                 <xs:element maxOccurs="unbounded" ref="gene:PropertyType"/>
             </xs:sequence>

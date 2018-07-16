@@ -7,8 +7,8 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="ConservacioGlobalArqueologic.xsd"/>
-    <xs:include schemaLocation="ConservacioGlobalArquitectonic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/ConservacioGlobalArqueologic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/ConservacioGlobalArquitectonic.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
@@ -20,7 +20,7 @@
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    blab bla bla
+                    Estat de conservació del bé.
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>

@@ -2,7 +2,11 @@
            targetNamespace="http://www.gencat.cat/">
     <xs:simpleType name="PropietariArquitectonicType">
         <xs:restriction base="xs:string">
-
+            <xs:enumeration value="Privada"/>
+            <xs:enumeration value="Pública"/>
+            <xs:enumeration value="Eclesiàstica"/>
+            <xs:enumeration value="Cooperativa"/>
+            <xs:enumeration value="Pendent"/>
         </xs:restriction>
     </xs:simpleType>
 </xs:schema>

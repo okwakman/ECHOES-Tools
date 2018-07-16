@@ -7,6 +7,8 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+    <xs:include schemaLocation="Diccionaris/OriginalActual.xsd"/>
+    <xs:include schemaLocation="Diccionaris/Utilitzacio.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
@@ -18,7 +20,7 @@
         <xs:complexType>
             <xs:annotation>
                 <xs:documentation>
-                    blab bla bla
+                    L'ús que s'esta fent d'aquest bé.
                 </xs:documentation>
             </xs:annotation>
             <xs:complexContent>
@@ -32,7 +34,15 @@
         <xs:complexContent>
             <xs:extension base="rdf:AboutType">
                 <xs:sequence>
-                    <xs:element name="originalActual" type="rdf:LiteralType"/>
+                    <xs:element name="originalActual">
+                        <xs:complexType>
+                            <xs:choice>
+                                <xs:element name="originalActualText" type="rdf:LiteralType"/>
+                                <xs:element name="tipusOriginalActual" type="gene:OriginalActualType"/>
+                                <xs:element name="tipusUtilitzacio" type="gene:UtilitzacioType"/>
+                            </xs:choice>
+                        </xs:complexType>
+                    </xs:element>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
