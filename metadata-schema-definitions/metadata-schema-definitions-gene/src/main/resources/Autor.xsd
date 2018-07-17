@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://www.gencat.cat/"
+        xmlns:gene="http://www.gencat.cat/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+
+    <xs:annotation>
+        <xs:documentation>
+            GENE First Implementation Schema: Contextual elements (vocabulary terms)
+        </xs:documentation>
+    </xs:annotation>
+
+    <xs:element name="AutorType">
+        <xs:complexType>
+            <xs:annotation>
+                <xs:documentation>
+                    Creador o contribuidor del bé.
+                </xs:documentation>
+            </xs:annotation>
+            <xs:complexContent>
+                <xs:extension base="gene:SequenceAutorType">
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="SequenceAutorType">
+        <xs:complexContent>
+            <xs:extension base="rdf:AboutType">
+                <xs:sequence>
+                    <xs:element minOccurs="0" maxOccurs="unbounded" name="cognoms" type="rdf:LiteralType" />
+                    <xs:element name="noms" type="rdf:LiteralType"/>
+                    <xs:element minOccurs="0" name="professio" type="rdf:LiteralType" />
+                    <xs:element minOccurs="0" name="anyInici" type="xs:int"/>
+                    <xs:element minOccurs="0" name="anyFi" type="xs:int"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+
+</xs:schema>

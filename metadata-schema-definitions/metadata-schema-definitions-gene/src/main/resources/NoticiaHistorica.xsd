@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://www.gencat.cat/"
+        xmlns:gene="http://www.gencat.cat/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+
+    <xs:annotation>
+        <xs:documentation>
+            GENE First Implementation Schema: Contextual elements (vocabulary terms)
+        </xs:documentation>
+    </xs:annotation>
+
+    <xs:element name="NoticiaHistoricaType">
+        <xs:complexType>
+            <xs:annotation>
+                <xs:documentation>
+                    Noticia Historica relacionada amb el bé.
+                </xs:documentation>
+            </xs:annotation>
+            <xs:complexContent>
+                <xs:extension base="gene:SequenceNoticiaHistoricaType">
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="SequenceNoticiaHistoricaType">
+        <xs:complexContent>
+            <xs:extension base="rdf:AboutType">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="tipusNoticiaHistorica" type="rdf:LiteralType"/>
+                    <xs:element minOccurs="0" name="dataNoticiaHistorica" type="xs:date"/>
+                    <xs:element minOccurs="0" name="nomNoticiaHistorica" type="rdf:LiteralType"/>
+                    <xs:element minOccurs="0" name="comentariNoticiaHistorica" type="rdf:LiteralType"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+
+</xs:schema>

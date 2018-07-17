@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace"
+        targetNamespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        elementFormDefault="qualified">
+    <annotation>
+        <documentation>
+            EDM First Implementation Schema: RDF resources and literals
+        </documentation>
+    </annotation>
+
+    <import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="XML.xsd"/>
+
+    <complexType name="ResourceType">
+        <attribute ref="rdf:resource" use="required"/>
+    </complexType>
+
+    <complexType name="AboutType">
+        <attribute ref="rdf:about" use="required"/>
+    </complexType>
+
+    <complexType name="LiteralType">
+        <simpleContent>
+            <extension base="string">
+                <attribute ref="xml:lang" use="optional"/>
+            </extension>
+        </simpleContent>
+    </complexType>
+
+    <attribute name="resource">
+        <simpleType>
+            <restriction base="anyURI"/>
+        </simpleType>
+    </attribute>
+
+    <attribute name="about">
+        <simpleType>
+            <restriction base="anyURI"/>
+        </simpleType>
+    </attribute>
+
+    <complexType name="ResourceOrLiteralType">
+        <simpleContent>
+            <extension base="string">
+                <attribute ref="xml:lang" use="optional"/>
+                <attribute ref="rdf:resource" use="optional"/>
+            </extension>
+        </simpleContent>
+    </complexType>
+
+</schema>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://www.gencat.cat/"
+        xmlns:gene="http://www.gencat.cat/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+    <xs:include schemaLocation="Identificacio.xsd"/>
+
+    <xs:element name="PropertyType">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="gene:SequencePropertyType">
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="SequencePropertyType">
+        <xs:complexContent>
+            <xs:extension base="rdf:AboutType">
+                <xs:sequence>
+                    <xs:element name="proveidor" type="rdf:ResourceType"/>
+                    <xs:element name="subClassOf" type="rdf:ResourceType"/>
+
+                    <xs:element name="tipusPatrimoni" type="gene:PatrimoniTipus" minOccurs="0"/>
+                    <xs:element name="codiIntern" type="rdf:LiteralType" minOccurs="0"/>
+                    <xs:element name="codiInventari" type="rdf:LiteralType" minOccurs="0"/>
+                    <xs:element name="nom" type="rdf:LiteralType" minOccurs="0"/>
+                    <xs:element name="altresNoms" type="rdf:LiteralType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+</xs:schema>
