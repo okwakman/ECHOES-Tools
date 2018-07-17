@@ -20,11 +20,8 @@
 
     <xs:complexType name="SequencePropertyType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:PropertyAboutType">
                 <xs:sequence>
-                    <xs:element name="proveidor" type="rdf:ResourceType"/>
-                    <xs:element name="subClassOf" type="rdf:ResourceType"/>
-
                     <xs:element name="tipusPatrimoni" type="gene:PatrimoniTipus" minOccurs="0"/>
                     <xs:element name="codiIntern" type="rdf:LiteralType" minOccurs="0"/>
                     <xs:element name="codiInventari" type="rdf:LiteralType" minOccurs="0"/>

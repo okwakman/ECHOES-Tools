@@ -20,6 +20,22 @@
         <attribute ref="rdf:about" use="required"/>
     </complexType>
 
+    <complexType name="PropertyAboutType">
+        <sequence>
+            <element name="proveidor" type="rdf:ResourceType"/>
+            <element name="subClassOf" type="rdf:ResourceType"/>
+        </sequence>
+        <attribute ref="rdf:about" use="required"/>
+    </complexType>
+
+
+    <complexType name="IdentificadorType">
+        <sequence>
+            <element name="identificador" type="rdf:ResourceType"/>
+        </sequence>
+        <attribute ref="rdf:about" use="required"/>
+    </complexType>
+
     <complexType name="LiteralType">
         <simpleContent>
             <extension base="string">

@@ -30,7 +30,7 @@
 
     <xs:complexType name="SequenceDescripcioType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element name="descDescripcio" type="rdf:LiteralType"/>
                 </xs:sequence>
