@@ -3,7 +3,7 @@
  */
 package org.csuc.deserialize;
 
-import gencat.cat.RDF;
+import cat.gencat.RDF;
 import isbn._1_931666_22_9.Ead;
 import nl.memorix_maior.api.rest._3.Memorix;
 import nl.mindbus.a2a.A2AType;

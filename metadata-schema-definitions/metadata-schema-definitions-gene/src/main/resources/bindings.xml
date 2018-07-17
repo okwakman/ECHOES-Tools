@@ -12,7 +12,7 @@ http://jaxb2-commons.dev.java.net/namespace-prefix ">
             <jxb:globalBindings typesafeEnumMaxMembers="1024" typesafeEnumMemberName="generateName"/>
         </jxb:bindings>
         <jxb:schemaBindings>
-            <jxb:package name="gencat.cat"/>
+            <jxb:package name="cat.gencat"/>
         </jxb:schemaBindings>
         <jxb:bindings>
             <namespace:prefix name="gene"/>

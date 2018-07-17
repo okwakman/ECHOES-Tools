@@ -1,7 +1,10 @@
 package org.EDM.Transformations.formats.gene;
 
 import cat.gencat.*;
+import cat.gencat.ResourceType;
 import eu.europeana.corelib.definitions.jibx.*;
+import eu.europeana.corelib.definitions.jibx.RDF;
+import eu.europeana.corelib.definitions.jibx.ResourceOrLiteralType;
 import net.sf.saxon.functions.IriToUri;
 import org.EDM.Transformations.formats.EDM;
 import org.EDM.Transformations.formats.xslt.XSLTTransformations;
@@ -26,12 +29,10 @@ import java.util.Optional;
 
 public class GENERDF2EDM extends RDF implements EDM {
     private static Logger logger = LogManager.getLogger(GENERDF2EDM.class);
-    private org.w3._1999._02._22_rdf_syntax_ns_.RDF GENERDF;
-    //private String identifier;
+    private cat.gencat.RDF GENERDF;
     private Map<String, String> properties;
 
-    public GENERDF2EDM(/*String identifier, */org.w3._1999._02._22_rdf_syntax_ns_.RDF type, Map<String, String> properties) {
-        //this.identifier = identifier;
+    public GENERDF2EDM(cat.gencat.RDF type, Map<String, String> properties) {
         this.GENERDF = type;
         this.properties = properties;
 
@@ -45,7 +46,7 @@ public class GENERDF2EDM extends RDF implements EDM {
     private void edmTimeSpan() {
         try {
             // Datacio
-            GENERDF.getDatacio().forEach((Datacio datacio) -> {
+            GENERDF.getDatacioType().forEach((DatacioType datacio) -> {
                 Choice choice = new Choice();
                 TimeSpanType timeSpan = new TimeSpanType();
                 // Datacio[rdf:about]
@@ -53,7 +54,10 @@ public class GENERDF2EDM extends RDF implements EDM {
                 // Datacio -> anyInici
                 if (datacio.getAnyInici() != null) {
                     PrefLabel prefLabel = new PrefLabel();
-                    prefLabel.setString(yearMinFourDigits(datacio.getAnyInici()));
+                    // TODO: Obtenir les diverses cronologies
+                    if (datacio.getAnyInici() != null){
+                        prefLabel.setString(yearMinFourDigits(datacio.getAnyInici()));
+                    }
                     timeSpan.getPrefLabelList().add(prefLabel);
                     Begin begin = new Begin();
                     begin.setString(prefLabel.getString() + "-01-01");
@@ -79,14 +83,15 @@ public class GENERDF2EDM extends RDF implements EDM {
     private void skosConcept() {
         try {
             // Us
-            GENERDF.getUs().forEach((Us us) -> {
+            GENERDF.getUsType().forEach((UsType us) -> {
                 Choice choice = new Choice();
                 Concept concept = new Concept();
                 // "Us" + Us -> originalActual
-                concept.setAbout("Us:" + IriToUri.iriToUri(StringUtils.deleteWhitespace(us.getOriginalActual())));
+                concept.setAbout("Us:" + IriToUri.iriToUri(StringUtils.deleteWhitespace(us.getOriginalActual().toString())));
                 // Us -> originalActual
                 PrefLabel prefLabel = new PrefLabel();
-                prefLabel.setString(us.getOriginalActual());
+
+                prefLabel.setString(us.getOriginalActual().toString());
                 Concept.Choice cChoice = new Concept.Choice();
                 cChoice.setPrefLabel(prefLabel);
                 concept.getChoiceList().add(cChoice);
@@ -122,7 +127,7 @@ public class GENERDF2EDM extends RDF implements EDM {
     private void edmPlace() {
         try {
             // Localitzacio
-            GENERDF.getLocalitzacio().forEach((Localitzacio localitzacio) -> {
+            GENERDF.getLocalitzacioType().forEach((LocalitzacioType localitzacio) -> {
                 Choice choice = new Choice();
                 PlaceType place = new PlaceType();
                 // Localitzacio[rdf:about]
@@ -147,9 +152,9 @@ public class GENERDF2EDM extends RDF implements EDM {
                 }
                 if (localitzacio.getTerritori() != null) {
                     // TODO: Use more than 1 Territori
-                    Localitzacio.Territori locTerritori = localitzacio.getTerritori().get(0);
-                    Optional<Territori> territoriOpt = GENERDF.getTerritori().stream().filter(t -> t.getAbout().equals(locTerritori.getResource())).findFirst();
-                    Territori territori = territoriOpt.get();
+                    ResourceType locTerritori = localitzacio.getTerritori().get(0);
+                    Optional<TerritoriType> territoriOpt = GENERDF.getTerritoriType().stream().filter(t -> t.getAbout().equals(((ResourceType) locTerritori).getResource())).findFirst();
+                    TerritoriType territori = territoriOpt.get();
                     // Localitzacio -> territori -> comarca
                     prefLabelStr += territori.getMunicipi() + ", " + territori.getComarca();
                 } else {
@@ -167,7 +172,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                 // Localitzacio -> locDescripcio
                 if (localitzacio.getLocDescripcio() != null) {
                     Note note = new Note();
-                    note.setString(localitzacio.getLocDescripcio());
+                    note.setString(localitzacio.getLocDescripcio().getValue());
                     place.getNoteList().add(note);
                 }
                 choice.setPlace(place);
@@ -190,7 +195,7 @@ public class GENERDF2EDM extends RDF implements EDM {
     private void edmAgent() {
         try {
             // Autor
-            GENERDF.getAutor().forEach((Autor autor) -> {
+            GENERDF.getAutorType().forEach((AutorType autor) -> {
                 Choice choice = new Choice();
                 AgentType agent = new AgentType();
                 // Autor[rdf:about]
@@ -198,14 +203,14 @@ public class GENERDF2EDM extends RDF implements EDM {
                 // Autor -> noms
                 if (autor.getNoms() != null){
                     PrefLabel prefLabel = new PrefLabel();
-                    prefLabel.setString(autor.getNoms());
+                    prefLabel.setString(autor.getNoms().getValue());
                     agent.getPrefLabelList().add(prefLabel);
                 }
                 // Autor -> cognoms
                 if (autor.getCognoms() != null){
-                    autor.getCognoms().forEach((String cognom) -> {
+                    autor.getCognoms().forEach((cat.gencat.LiteralType cognom) -> {
                         AltLabel altLabel = new AltLabel();
-                        altLabel.setString(cognom);
+                        altLabel.setString(cognom.getValue());
                         agent.getAltLabelList().add(altLabel);
                     });
                 }
@@ -243,7 +248,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                 // Autor -> professio
                 if (autor.getProfessio() != null){
                     ProfessionOrOccupation professio = new ProfessionOrOccupation();
-                    professio.setString(autor.getProfessio());
+                    professio.setString(autor.getProfessio().getValue());
                     agent.getProfessionOrOccupationList().add(professio);
                 }
                 choice.setAgent(agent);
@@ -257,58 +262,58 @@ public class GENERDF2EDM extends RDF implements EDM {
     private void edmProvidedCHO() {
         try {
             // Identificacio
-            GENERDF.getIdentificacio().forEach((Identificacio identificacio) -> {
+            GENERDF.getIdentificacioType().forEach((IdentificacioType identificacio) -> {
                 Choice choice = new Choice();
                 ProvidedCHOType provided = new ProvidedCHOType();
                 // Identificacio[rdf:about]
                 provided.setAbout(identificacio.getAbout());
                 // Descripcio -> descDescripcio
-                GENERDF.getDescripcio().stream().filter(d -> d.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((Descripcio descripcio) -> {
+                GENERDF.getDescripcioType().stream().filter(d -> d.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((DescripcioType descripcio) -> {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cDesc = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Description desc = new Description();
-                    desc.setString(descripcio.getDescDescripcio());
+                    desc.setString(descripcio.getDescDescripcio().getValue());
                     cDesc.setDescription(desc);
                     provided.getChoiceList().add(cDesc);
                 });
                 // Identificacio -> codiIntern
                 eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cCodiIntern = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                 Identifier codiIntern = new Identifier();
-                codiIntern.setString(identificacio.getCodiIntern());
+                codiIntern.setString(identificacio.getCodiIntern().getValue());
                 cCodiIntern.setIdentifier(codiIntern);
                 provided.getChoiceList().add(cCodiIntern);
                 // Identificacio -> codiInventari
                 if (identificacio.getCodiInventari() != null) {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cCodiInventari = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Identifier codiInventari = new Identifier();
-                    codiInventari.setString(identificacio.getCodiInventari());
+                    codiInventari.setString(identificacio.getCodiInventari().getValue());
                     cCodiInventari.setIdentifier(codiInventari);
                     provided.getChoiceList().add(cCodiInventari);
                 }
                 // Identificacio -> type
-                eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cProveidor = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
+                /*eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cProveidor = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                 Publisher publisher = new Publisher();
                 publisher.setString(identificacio.getType());
                 cProveidor.setPublisher(publisher);
-                provided.getChoiceList().add(cProveidor);
+                provided.getChoiceList().add(cProveidor);*/
                 // propietari -> tipusRegim
-                GENERDF.getPropietari().stream().filter(p -> p.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((Propietari propietari) -> {
+                GENERDF.getPropietariType().stream().filter(p -> p.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((PropietariType propietari) -> {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cPropietari = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Rights rights = new Rights();
-                    rights.setString(propietari.getTipusRegim());
+                    rights.setString(propietari.getTipusRegim().toString());
                     cPropietari.setRights(rights);
                     provided.getChoiceList().add(cPropietari);
                 });
                 // Identificacio -> nom
                 eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cNom = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                 Title title = new Title();
-                title.setString(identificacio.getNom());
+                title.setString(identificacio.getNom().getValue());
                 cNom.setTitle(title);
                 provided.getChoiceList().add(cNom);
                 // Tipologia -> tipologia
-                GENERDF.getTipologia().stream().filter(t -> t.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((Tipologia tipologia) -> {
+                GENERDF.getTipologiaType().stream().filter(t -> t.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((TipologiaType tipologia) -> {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cTipologia = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Type1 type = new Type1();
-                    type.setString(tipologia.getTipologia());
+                    type.setString(tipologia.getTipologia().toString());
                     cTipologia.setType(type);
                     provided.getChoiceList().add(cTipologia);
                 });
@@ -322,7 +327,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                 if (identificacio.getAltresNoms() != null) {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cAltresNoms = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Alternative alternative = new Alternative();
-                    alternative.setString(identificacio.getAltresNoms());
+                    alternative.setString(identificacio.getAltresNoms().getValue());
                     cAltresNoms.setAlternative(alternative);
                     provided.getChoiceList().add(cAltresNoms);
                 }
@@ -334,7 +339,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                         provided.setType(t);
                     }
                 });
-                long numNoticiesHistoriques = GENERDF.getTipologia().stream().filter(t -> t.getIdentificador().getResource().equals(identificacio.getAbout())).count();
+                long numNoticiesHistoriques = GENERDF.getTipologiaType().stream().filter(t -> t.getIdentificador().getResource().equals(identificacio.getAbout())).count();
                 if (numNoticiesHistoriques > 0){
                     Choice aggChoice = new Choice();
                     Aggregation agg = new Aggregation();
@@ -370,7 +375,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                     this.getChoiceList().add(aggChoice);
                 }
                 // dcterms:temporal -> datacio
-                GENERDF.getDatacio().stream().filter(d -> d.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((Datacio datacio) -> {
+                GENERDF.getDatacioType().stream().filter(d -> d.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((DatacioType datacio) -> {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cTemporal = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Temporal temporal = new Temporal();
                     ResourceOrLiteralType.Resource resource = new ResourceOrLiteralType.Resource();
@@ -381,7 +386,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                     provided.getChoiceList().add(cTemporal);
                 });
                 // dcterms:spatial -> localitzacio
-                GENERDF.getLocalitzacio().stream().filter(l -> l.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((Localitzacio localitzacio) -> {
+                GENERDF.getLocalitzacioType().stream().filter(l -> l.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((LocalitzacioType localitzacio) -> {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cSpatial = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Spatial spatial = new Spatial();
                     ResourceOrLiteralType.Resource resource = new ResourceOrLiteralType.Resource();
@@ -392,7 +397,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                     provided.getChoiceList().add(cSpatial);
                 });
                 // dc:creator -> autor
-                GENERDF.getAutor().stream().filter(a -> a.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((Autor autor) -> {
+                GENERDF.getAutorType().stream().filter(a -> a.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((AutorType autor) -> {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cCreator = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Creator creator = new Creator();
                     ResourceOrLiteralType.Resource resource = new ResourceOrLiteralType.Resource();
@@ -406,7 +411,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                 this.getChoiceList().add(choice);
             });
             // noticiaHistorica
-            GENERDF.getNoticiaHistorica().forEach((NoticiaHistorica noticiaHistorica) -> {
+            GENERDF.getNoticiaHistoricaType().forEach((NoticiaHistoricaType noticiaHistorica) -> {
                 Choice choice = new Choice();
                 ProvidedCHOType provided = new ProvidedCHOType();
                 // noticiaHistorica[rdf:about]
@@ -423,7 +428,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                 if (noticiaHistorica.getComentariNoticiaHistorica() != null) {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cComentari = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Description description = new Description();
-                    description.setString(noticiaHistorica.getComentariNoticiaHistorica());
+                    description.setString(noticiaHistorica.getComentariNoticiaHistorica().getValue());
                     cComentari.setDescription(description);
                     provided.getChoiceList().add(cComentari);
                 }
@@ -431,7 +436,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                 if (noticiaHistorica.getNomNoticiaHistorica() != null) {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cNom = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Title title = new Title();
-                    title.setString(noticiaHistorica.getNomNoticiaHistorica());
+                    title.setString(noticiaHistorica.getNomNoticiaHistorica().getValue());
                     cNom.setTitle(title);
                     provided.getChoiceList().add(cNom);
                 }
@@ -439,7 +444,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                 if (noticiaHistorica.getTipusNoticiaHistorica() != null) {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cTipus = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Type1 type = new Type1();
-                    type.setString(noticiaHistorica.getTipusNoticiaHistorica());
+                    type.setString(noticiaHistorica.getTipusNoticiaHistorica().getValue());
                     cTipus.setType(type);
                     provided.getChoiceList().add(cTipus);
                 }
