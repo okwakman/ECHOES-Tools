@@ -416,6 +416,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cData = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Date date = new Date();
                     date.setString(noticiaHistorica.getDataNoticiaHistorica().toString());
+                    cData.setDate(date);
                     provided.getChoiceList().add(cData);
                 }
                 // noticiaHistorica -> comentariNoticiaHistorica
@@ -423,6 +424,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cComentari = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Description description = new Description();
                     description.setString(noticiaHistorica.getComentariNoticiaHistorica());
+                    cComentari.setDescription(description);
                     provided.getChoiceList().add(cComentari);
                 }
                 // noticiaHistorica -> nomNoticiaHistorica
@@ -430,6 +432,7 @@ public class GENERDF2EDM extends RDF implements EDM {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cNom = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Title title = new Title();
                     title.setString(noticiaHistorica.getNomNoticiaHistorica());
+                    cNom.setTitle(title);
                     provided.getChoiceList().add(cNom);
                 }
                 // noticiaHistorica -> tipusNoticiaHistorica
