@@ -31,7 +31,7 @@
 
     <xs:complexType name="SequenceLocalitzacioType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element name="territori" maxOccurs="unbounded" type="rdf:ResourceType"/>
                     <xs:element name="adreca" minOccurs="0" type="rdf:LiteralType" />

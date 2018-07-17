@@ -34,7 +34,7 @@
 
     <xs:complexType name="SequenceProteccioType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element minOccurs="0" name="proteccio" type="xs:string"/>
                     <xs:element minOccurs="0" name="ambit" type="gene:AmbitProteccioType" />

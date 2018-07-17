@@ -30,7 +30,7 @@
 
     <xs:complexType name="SequenceAutorType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element minOccurs="0" maxOccurs="unbounded" name="cognoms" type="rdf:LiteralType" />
                     <xs:element name="noms" type="rdf:LiteralType"/>

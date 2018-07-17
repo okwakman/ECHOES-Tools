@@ -30,7 +30,7 @@
 
     <xs:complexType name="SequenceNoticiaHistoricaType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element minOccurs="0" name="tipusNoticiaHistorica" type="rdf:LiteralType"/>
                     <xs:element minOccurs="0" name="dataNoticiaHistorica" type="xs:date"/>

@@ -33,7 +33,7 @@
 
     <xs:complexType name="SequenceDatacioType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element name="cronologiaInicial" minOccurs="0">
                         <xs:complexType>

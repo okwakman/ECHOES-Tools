@@ -32,7 +32,7 @@
 
     <xs:complexType name="SequenceEstilType">
         <xs:complexContent>
-            <xs:extension base="rdf:AboutType">
+            <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element name="tipusEstil">
                         <xs:complexType>
