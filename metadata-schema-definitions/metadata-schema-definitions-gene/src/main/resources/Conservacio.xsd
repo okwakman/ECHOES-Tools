@@ -7,8 +7,8 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="Diccionaris/ConservacioGlobalArqueologic.xsd"/>
-    <xs:include schemaLocation="Diccionaris/ConservacioGlobalArquitectonic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/ConservacioEstatArqueologic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/ConservacioEstatArquitectonic.xsd"/>
 
     <xs:annotation>
         <xs:documentation>
@@ -34,24 +34,15 @@
         <xs:complexContent>
             <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
-                    <xs:element name="conservacioGlobal" minOccurs="0">
-                        <xs:complexType>
-                            <xs:choice>
-                                <xs:element name="conservacioGlobalArqueologic" type="gene:ConservacioGlobalArqueologicType"/>
-                                <xs:element name="conservacioGlobalArquitectonic" type="gene:ConservacioGlobalArquitectonicType"/>
-                            </xs:choice>
-                        </xs:complexType>
-                    </xs:element>
-
                     <xs:element name="conservacioEstat" minOccurs="0">
                         <xs:complexType>
                             <xs:choice>
-                                <xs:element name="conservacioEstatArqueologic" type="gene:ConservacioGlobalArqueologicType"/>
-                                <xs:element name="conservacioEstatArquitectonic" type="gene:ConservacioGlobalArquitectonicType"/>
+                                <xs:element name="conservacioEstatArqueologic" type="gene:ConservacioEstatArqueologicType"/>
+                                <xs:element name="conservacioEstatArquitectonic" type="gene:ConservacioEstatArquitectonicType"/>
                             </xs:choice>
                         </xs:complexType>
                     </xs:element>
-                    <xs:element name="conservacioComentari" type="xs:string" minOccurs="0"/>
+                    <xs:element name="conservacioComentari" type="rdf:LiteralType" minOccurs="0"/>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>

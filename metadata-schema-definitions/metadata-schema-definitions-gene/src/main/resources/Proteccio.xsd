@@ -36,7 +36,7 @@
         <xs:complexContent>
             <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
-                    <xs:element minOccurs="0" name="proteccio" type="xs:string"/>
+                    <xs:element minOccurs="0" name="proteccio" type="rdf:LiteralType"/>
                     <xs:element minOccurs="0" name="ambit" type="gene:AmbitProteccioType" />
                     <xs:element minOccurs="0" name="categoria" type="gene:CategoriaType" />
                     <xs:element name="classificacio" minOccurs="0" maxOccurs="unbounded">
@@ -47,6 +47,7 @@
                             </xs:choice>
                         </xs:complexType>
                     </xs:element>
+                    <!-- TODO: Change to dictionary when available -->
                     <xs:element minOccurs="0" name="entornProteccio" type="xs:boolean"/>
                     <xs:element minOccurs="0" name="BCIN" type="rdf:LiteralType"/>
                     <xs:element minOccurs="0" name="BIC" type="rdf:LiteralType"/>

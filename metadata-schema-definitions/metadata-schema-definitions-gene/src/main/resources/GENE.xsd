@@ -11,9 +11,6 @@
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
     <xs:include schemaLocation="Property.xsd"/>
-
-    <xs:include schemaLocation="Identificacio.xsd"/>
-
     <xs:include schemaLocation="Identificacio.xsd"/>
     <xs:include schemaLocation="Localitzacio.xsd"/>
     <xs:include schemaLocation="Territori.xsd"/>

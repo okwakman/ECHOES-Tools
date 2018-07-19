@@ -32,7 +32,7 @@
 
     <xs:complexType name="SequenceTerritoriType">
         <xs:complexContent>
-            <xs:extension base="rdf:IdentificadorType">
+            <xs:extension base="rdf:AboutType">
                 <xs:sequence>
                     <xs:element name="municipi" type="gene:MunicipiType"/>
                     <xs:element name="comarca" type="gene:ComarcaType" maxOccurs="unbounded" />

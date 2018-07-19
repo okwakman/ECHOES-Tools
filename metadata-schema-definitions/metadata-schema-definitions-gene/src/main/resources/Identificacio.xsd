@@ -33,7 +33,7 @@
         <xs:complexContent>
             <xs:extension base="rdf:AboutType">
                 <xs:sequence>
-                    <xs:element name="tipusPatrimoni" type="gene:PatrimoniTipus" minOccurs="1"/>
+                    <xs:element name="tipusPatrimoni" type="gene:PatrimoniTipus"/>
                     <xs:element name="codiIntern" type="rdf:LiteralType"/>
                     <xs:element name="codiInventari" type="rdf:LiteralType" minOccurs="0"/>
                     <xs:element name="nom" type="rdf:LiteralType"/>
