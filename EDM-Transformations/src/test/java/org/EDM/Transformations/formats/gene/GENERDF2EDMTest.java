@@ -35,6 +35,8 @@ public class GENERDF2EDMTest {
 
         IdentificacioType id = new IdentificacioType();
         id.setAbout("ID:About:1");
+        id.setCodiIntern(this.stringToLiteralType("Codi Intern 1"));
+        id.setNom(this.stringToLiteralType("Nom 1"));
         id.setCodiInventari(this.stringToLiteralType("Codi Inventari 1"));
         id.setTipusPatrimoni(PatrimoniTipus.ARQUITECTÒNIC);
         rdf.getIdentificacioType().add(id);
@@ -238,7 +240,7 @@ public class GENERDF2EDMTest {
         return resourceType;
     }
 
-    //@Before
+    @Before
     public void setUp() throws Exception {
         xml = new File(getClass().getClassLoader().getResource("gene/gene.xml").getFile());
         tmp = Files.createTempFile("generdf_edm", ".xml").toFile();
