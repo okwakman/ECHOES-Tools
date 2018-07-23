@@ -23,6 +23,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,16 +32,26 @@ public class GENERDF2EDM extends RDF implements EDM {
     private static Logger logger = LogManager.getLogger(GENERDF2EDM.class);
     private cat.gencat.RDF GENERDF;
     private Map<String, String> properties;
+    private Map<String, IdentificacioType> ids;
+    private Map<String, PropertyType> props;
 
     public GENERDF2EDM(cat.gencat.RDF type, Map<String, String> properties) {
         this.GENERDF = type;
         this.properties = properties;
-
+        this.ids = new HashMap<>();
+        this.props = new HashMap<>();
+        this.cacheIdentificador();
+        // TODO: Use Merged Info instead of the particular if available
         edmProvidedCHO();
         edmAgent();
         edmPlace();
         skosConcept();
         edmTimeSpan();
+    }
+
+    private void cacheIdentificador(){
+        GENERDF.getIdentificacioType().forEach((IdentificacioType id) -> ids.put(id.getAbout(), id));
+        GENERDF.getPropertyType().forEach((PropertyType prop) -> props.put(prop.getAbout(), prop));
     }
 
     private void edmTimeSpan() {
@@ -51,25 +62,73 @@ public class GENERDF2EDM extends RDF implements EDM {
                 TimeSpanType timeSpan = new TimeSpanType();
                 // Datacio[rdf:about]
                 timeSpan.setAbout(datacio.getAbout());
-                // Datacio -> anyInici
-                if (datacio.getAnyInici() != null) {
-                    PrefLabel prefLabel = new PrefLabel();
-                    // TODO: Obtenir les diverses cronologies
-                    if (datacio.getAnyInici() != null){
-                        prefLabel.setString(yearMinFourDigits(datacio.getAnyInici()));
+                /* Datacio -> anyInici
+                   Datacio -> anyFi
+                   Datacio -> cronologiaInicial
+                   Datacio -> cronologiaFinal
+                */
+                Begin begin = new Begin();
+                End end = new End();
+                PrefLabel prefLabel = new PrefLabel();
+                if (datacio.getAnyInici() != null){
+                    prefLabel.setString(yearMinFourDigits(datacio.getAnyInici()));
+                    begin.setString(yearMinFourDigits(datacio.getAnyInici()));
+                }
+                PatrimoniTipus tipusPatrimoni = getTipusPatrimoni(datacio);
+                switch (tipusPatrimoni){
+                    case ARQUITECTÒNIC:
+                        if (datacio.getAnyInici() == null && datacio.getCronologiaInicial() != null && datacio.getCronologiaInicial().getCronologiaInicialArquitectonic() != null){
+                            prefLabel.setString(datacio.getCronologiaInicial().getCronologiaInicialArquitectonic().value());
+                            begin.setString(datacio.getCronologiaInicial().getCronologiaInicialArquitectonic().value());
+                        }
+                        if (datacio.getAnyFi() == null && datacio.getCronologiaFinal() != null && datacio.getCronologiaFinal().getCronologiaFinalArquitectonic() != null){
+                            if (prefLabel.getString().isEmpty()) {
+                                prefLabel.setString(datacio.getCronologiaFinal().getCronologiaFinalArquitectonic().value());
+                            } else {
+                                prefLabel.setString(prefLabel.getString() + " - " + datacio.getCronologiaFinal().getCronologiaFinalArquitectonic().value());
+                            }
+                            end.setString(datacio.getCronologiaFinal().getCronologiaFinalArquitectonic().value());
+                        }
+                        break;
+                    case ARQUEOLÒGIC:
+                        if (datacio.getAnyInici() == null && datacio.getCronologiaInicial() != null && datacio.getCronologiaInicial().getCronologiaInicialArqueologic() != null){
+                            prefLabel.setString(datacio.getCronologiaInicial().getCronologiaInicialArqueologic().value());
+                            begin.setString(datacio.getCronologiaInicial().getCronologiaInicialArqueologic().value());
+                        }
+                        if (datacio.getAnyFi() == null && datacio.getCronologiaFinal() != null && datacio.getCronologiaFinal().getCronologiaFinalArqueologic() != null){
+                            if (prefLabel.getString().isEmpty()) {
+                                prefLabel.setString(datacio.getCronologiaFinal().getCronologiaFinalArqueologic().value());
+                            } else {
+                                prefLabel.setString(prefLabel.getString() + " - " + datacio.getCronologiaFinal().getCronologiaFinalArqueologic().value());
+                            }
+                            end.setString(datacio.getCronologiaFinal().getCronologiaFinalArqueologic().value());
+                        }
+                        break;
+                }
+                if (datacio.getAnyInici() == null && prefLabel.getString().isEmpty() && datacio.getCronologiaInicial() != null && datacio.getCronologiaInicial().getCronologiaInicialGeneral() != null){
+                    prefLabel.setString(datacio.getCronologiaInicial().getCronologiaInicialGeneral().value());
+                    begin.setString(datacio.getCronologiaInicial().getCronologiaInicialGeneral().value());
+                }
+                if (datacio.getAnyFi() == null && datacio.getCronologiaFinal() != null && datacio.getCronologiaFinal().getCronologiaFinal() != null){
+                    if (prefLabel.getString().isEmpty()) {
+                        prefLabel.setString("??-??-??");
                     }
+                    prefLabel.setString(datacio.getCronologiaFinal().getCronologiaFinal().value());
+                    begin.setString(datacio.getCronologiaFinal().getCronologiaFinal().value());
+                } else if (datacio.getAnyFi() != null) {
+                    if (prefLabel.getString().isEmpty()) {
+                        prefLabel.setString("??-??-??");
+                    }
+                    prefLabel.setString(prefLabel.getString() + " - ");
+                    prefLabel.setString(prefLabel.getString() + yearMinFourDigits(datacio.getAnyFi()) + "-01-01");
+                }
+                if (prefLabel.getString() != null && !prefLabel.getString().isEmpty()){
                     timeSpan.getPrefLabelList().add(prefLabel);
-                    Begin begin = new Begin();
-                    begin.setString(prefLabel.getString() + "-01-01");
+                }
+                if (begin.getString() != null && !begin.getString().isEmpty()){
                     timeSpan.setBegin(begin);
                 }
-                // Datacio -> anyFi
-                if (datacio.getAnyFi() != null) {
-                    AltLabel altLabel = new AltLabel();
-                    altLabel.setString(yearMinFourDigits(datacio.getAnyFi()));
-                    timeSpan.getAltLabelList().add(altLabel);
-                    End end = new End();
-                    end.setString(altLabel.getString() + "-01-01");
+                if (end.getString() != null && !end.getString().isEmpty()){
                     timeSpan.setEnd(end);
                 }
                 choice.setTimeSpan(timeSpan);
@@ -87,23 +146,33 @@ public class GENERDF2EDM extends RDF implements EDM {
                 Choice choice = new Choice();
                 Concept concept = new Concept();
                 // "Us" + Us -> originalActual
-                concept.setAbout("Us:" + IriToUri.iriToUri(StringUtils.deleteWhitespace(us.getOriginalActual().toString())));
-                // Us -> originalActual
-                PrefLabel prefLabel = new PrefLabel();
+                String usText = null;
+                SequenceUsType.OriginalActual originalActual = us.getOriginalActual();
+                if (originalActual.getOriginalActualText() != null){
+                    usText = originalActual.getOriginalActualText().getValue();
+                } else if (originalActual.getTipusOriginalActual() != null){
+                    usText = originalActual.getTipusOriginalActual().value();
+                } else if (originalActual.getTipusUtilitzacio() != null){
+                    usText = originalActual.getTipusUtilitzacio().value();
+                }
+                if (usText != null){
+                    concept.setAbout("Us:" + IriToUri.iriToUri(StringUtils.deleteWhitespace(usText)));
+                    // Us -> originalActual
+                    PrefLabel prefLabel = new PrefLabel();
+                    prefLabel.setString(usText);
+                    Concept.Choice cChoice = new Concept.Choice();
+                    cChoice.setPrefLabel(prefLabel);
+                    concept.getChoiceList().add(cChoice);
+                    // Relation with Identificacio
+                    cChoice = new Concept.Choice();
+                    Related related = new Related();
+                    related.setResource(us.getIdentificador().getResource());
+                    cChoice.setRelated(related);
+                    concept.getChoiceList().add(cChoice);
 
-                prefLabel.setString(us.getOriginalActual().toString());
-                Concept.Choice cChoice = new Concept.Choice();
-                cChoice.setPrefLabel(prefLabel);
-                concept.getChoiceList().add(cChoice);
-                // Relation with Identificacio
-                cChoice = new Concept.Choice();
-                Related related = new Related();
-                related.setResource(us.getIdentificador().getResource());
-                cChoice.setRelated(related);
-                concept.getChoiceList().add(cChoice);
-
-                choice.setConcept(concept);
-                this.getChoiceList().add(choice);
+                    choice.setConcept(concept);
+                    this.getChoiceList().add(choice);
+                }
             });
         } catch (Exception exception) {
             logger.error(String.format("[%s] error generate skosConcept \n", exception));
@@ -148,21 +217,21 @@ public class GENERDF2EDM extends RDF implements EDM {
                 String prefLabelStr = "";
                 // Localitzacio -> adreca
                 if (localitzacio.getAdreca() != null) {
-                    prefLabelStr += localitzacio.getAdreca() + ", ";
+                    prefLabelStr += localitzacio.getAdreca().getValue() + ", ";
                 }
                 if (localitzacio.getTerritori() != null) {
                     // TODO: Use more than 1 Territori
                     ResourceType locTerritori = localitzacio.getTerritori().get(0);
-                    Optional<TerritoriType> territoriOpt = GENERDF.getTerritoriType().stream().filter(t -> t.getAbout().equals(((ResourceType) locTerritori).getResource())).findFirst();
+                    Optional<TerritoriType> territoriOpt = GENERDF.getTerritoriType().stream().filter(t -> t.getAbout().equals((locTerritori).getResource())).findFirst();
                     TerritoriType territori = territoriOpt.get();
                     // Localitzacio -> territori -> comarca
-                    prefLabelStr += territori.getMunicipi() + ", " + territori.getComarca();
+                    prefLabelStr += territori.getMunicipi().value() + ", " + territori.getComarca().get(0).value();
                 } else {
                     prefLabelStr = prefLabelStr.substring(0, prefLabelStr.length() - 2);
                 }
                 // Localitzacio -> agregat
                 if (localitzacio.getAgregat() != null) {
-                    prefLabelStr += "(" + localitzacio.getAgregat() + ")";
+                    prefLabelStr += " (" + localitzacio.getAgregat().getValue() + ")";
                 }
                 if (!prefLabelStr.isEmpty()) {
                     PrefLabel prefLabel = new PrefLabel();
@@ -214,7 +283,6 @@ public class GENERDF2EDM extends RDF implements EDM {
                         agent.getAltLabelList().add(altLabel);
                     });
                 }
-
                 if (autor.getAnyInici() != null || autor.getAnyFi() != null){
                     Choice choiceDatacio = new Choice();
                     TimeSpanType timeSpan = new TimeSpanType();
@@ -224,10 +292,10 @@ public class GENERDF2EDM extends RDF implements EDM {
                     if (autor.getAnyInici() != null) {
                         PrefLabel prefLabel = new PrefLabel();
                         String anyInici = yearMinFourDigits(autor.getAnyInici());
-                        prefLabel.setString(anyInici);
+                        prefLabel.setString(anyInici + "-01-01");
                         timeSpan.getPrefLabelList().add(prefLabel);
                         Begin begin = new Begin();
-                        begin.setString(prefLabel.getString() + "-01-01");
+                        begin.setString(prefLabel.getString());
                         timeSpan.setBegin(begin);
                     }
                     // Autor -> anyFi
@@ -259,10 +327,18 @@ public class GENERDF2EDM extends RDF implements EDM {
         }
     }
 
+    private PatrimoniTipus getTipusPatrimoni(IdentificadorType idr){
+        if (ids.containsKey(idr.getIdentificador().getResource())){
+            return ids.get(idr.getIdentificador().getResource()).getTipusPatrimoni();
+        } else if (props.containsKey(idr.getIdentificador().getResource())){
+            return props.get(idr.getIdentificador().getResource()).getTipusPatrimoni();
+        }
+        return null;
+    }
     private void edmProvidedCHO() {
         try {
             // Identificacio
-            GENERDF.getIdentificacioType().forEach((IdentificacioType identificacio) -> {
+            GENERDF.getPropertyType().forEach((PropertyType identificacio) -> {
                 Choice choice = new Choice();
                 ProvidedCHOType provided = new ProvidedCHOType();
                 // Identificacio[rdf:about]
@@ -290,18 +366,34 @@ public class GENERDF2EDM extends RDF implements EDM {
                     provided.getChoiceList().add(cCodiInventari);
                 }
                 // Identificacio -> type
-                /*eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cProveidor = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
+                eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cProveidor = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                 Publisher publisher = new Publisher();
-                publisher.setString(identificacio.getType());
+                ResourceOrLiteralType.Resource publisherRsc = new ResourceOrLiteralType.Resource();
+                publisherRsc.setResource(identificacio.getProveidor().getResource());
+                publisher.setResource(publisherRsc);
+                publisher.setString("");
                 cProveidor.setPublisher(publisher);
-                provided.getChoiceList().add(cProveidor);*/
+                provided.getChoiceList().add(cProveidor);
                 // propietari -> tipusRegim
                 GENERDF.getPropietariType().stream().filter(p -> p.getIdentificador().getResource().equals(identificacio.getAbout())).forEach((PropietariType propietari) -> {
                     eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cPropietari = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
                     Rights rights = new Rights();
-                    rights.setString(propietari.getTipusRegim().toString());
-                    cPropietari.setRights(rights);
-                    provided.getChoiceList().add(cPropietari);
+                    PatrimoniTipus tipusPatrimoni = getTipusPatrimoni(propietari);
+                    switch (tipusPatrimoni){
+                        case ARQUITECTÒNIC:
+                            if (propietari.getTipusRegim().getTipusRegimArquitectonic() != null){
+                                rights.setString(propietari.getTipusRegim().getTipusRegimArquitectonic().value());
+                            }
+                            break;
+                        case ARQUEOLÒGIC:
+                            if (propietari.getTipusRegim().getTipusRegimArqueologic() != null){
+                                rights.setString(propietari.getTipusRegim().getTipusRegimArqueologic().value());
+                            }
+                    }
+                    if (!rights.getString().isEmpty()){
+                        cPropietari.setRights(rights);
+                        provided.getChoiceList().add(cPropietari);
+                    }
                 });
                 // Identificacio -> nom
                 eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice cNom = new eu.europeana.corelib.definitions.jibx.EuropeanaType.Choice();
@@ -339,7 +431,8 @@ public class GENERDF2EDM extends RDF implements EDM {
                         provided.setType(t);
                     }
                 });
-                long numNoticiesHistoriques = GENERDF.getTipologiaType().stream().filter(t -> t.getIdentificador().getResource().equals(identificacio.getAbout())).count();
+                long numNoticiesHistoriques = GENERDF.getNoticiaHistoricaType().stream().filter(t -> t.getIdentificador().getResource().equals(identificacio.getAbout())).count();
+                //System.out.print("NUM NOTICIES: " + numNoticiesHistoriques);
                 if (numNoticiesHistoriques > 0){
                     Choice aggChoice = new Choice();
                     Aggregation agg = new Aggregation();
