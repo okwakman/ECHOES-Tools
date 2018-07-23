@@ -1,0 +1,15 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.gencat.cat/">
+    <xs:simpleType name="CategoriaType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Pendent"/>
+            <xs:enumeration value="Incoat-BCIN"/>
+            <xs:enumeration value="BCIN"/>
+            <xs:enumeration value="BCIL"/>
+            <xs:enumeration value="Altres"/>
+            <xs:enumeration value="Entorn BCIN"/>
+            <xs:enumeration value="Pendent comprovació"/>
+            <xs:enumeration value="Plans d'ordenació"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

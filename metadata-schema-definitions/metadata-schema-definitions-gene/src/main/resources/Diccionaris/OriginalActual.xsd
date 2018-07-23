@@ -1,0 +1,21 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.gencat.cat/">
+    <xs:simpleType name="OriginalActualType">
+        <xs:restriction base="xs:string">
+            <!-- DIBA -->
+            <xs:enumeration value="Administratiu"/>
+            <xs:enumeration value="Científic"/>
+            <xs:enumeration value="Cultural"/>
+            <xs:enumeration value="Estructural"/>
+            <xs:enumeration value="Lúdic"/>
+            <xs:enumeration value="Ornamental"/>
+            <xs:enumeration value="Productiu"/>
+            <xs:enumeration value="Religiós"/>
+            <xs:enumeration value="Residencial"/>
+            <xs:enumeration value="Sense ús"/>
+            <xs:enumeration value="Simbòlic"/>
+            <xs:enumeration value="Social"/>
+            <xs:enumeration value="Altres"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

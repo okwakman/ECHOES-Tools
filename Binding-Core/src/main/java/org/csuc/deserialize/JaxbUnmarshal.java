@@ -3,12 +3,19 @@
  */
 package org.csuc.deserialize;
 
+import cat.gencat.RDF;
+import isbn._1_931666_22_9.Ead;
+import nl.memorix_maior.api.rest._3.Memorix;
+import nl.mindbus.a2a.A2AType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openarchives.oai._2.OAIPMHtype;
+import org.openarchives.oai._2_0.oai_dc.OaiDcType;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 
+import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -23,11 +30,17 @@ import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 
 /**
@@ -48,6 +61,7 @@ public class JaxbUnmarshal {
 			JAXBContext jc = JAXBContext.newInstance(classType);
 			Unmarshaller u = jc.createUnmarshaller();
             u.setEventHandler(validationEvent);
+			u.setSchema(addSchema(classType));
 
 			Object obj = u.unmarshal(file);
 
@@ -56,9 +70,9 @@ public class JaxbUnmarshal {
 			else    data = obj;
 
             logger.debug(String.format("isValidating %s", validationEvent.isValidating() ));
-		} catch (JAXBException e) {
+		} catch (JAXBException | SAXException e) {
 			logger.error(String.format("JaxbUnmarshal file %s", e));
-		}	   
+		}
 	}
 	
 	public JaxbUnmarshal(InputStream inputStream, Class[] classType) {
@@ -66,6 +80,7 @@ public class JaxbUnmarshal {
 		    JAXBContext jc = JAXBContext.newInstance(classType);
 		    Unmarshaller u = jc.createUnmarshaller();
             u.setEventHandler(validationEvent);
+			u.setSchema(addSchema(classType));
 
             Object obj = u.unmarshal(inputStream);
             if(obj instanceof JAXBElement)
@@ -73,7 +88,7 @@ public class JaxbUnmarshal {
             else   data = obj;
 
             logger.debug(String.format("isValidating %s", validationEvent.isValidating() ));
-		} catch (JAXBException e) {
+		} catch (JAXBException | SAXException e) {
 			logger.error(String.format("JaxbUnmarshal InputStream %s", e));
 		}
 	}
@@ -85,6 +100,7 @@ public class JaxbUnmarshal {
 			JAXBContext jc = JAXBContext.newInstance(classType);
 		    Unmarshaller u = jc.createUnmarshaller();
             u.setEventHandler(validationEvent);
+			u.setSchema(addSchema(classType));
 
             Object obj = u.unmarshal(url);
 
@@ -93,7 +109,7 @@ public class JaxbUnmarshal {
             else data = obj;
 
             logger.debug(String.format("isValidating %s", validationEvent.isValidating() ));
-		} catch (JAXBException e) {
+		} catch (JAXBException | SAXException e) {
 			logger.error(String.format("JaxbUnmarshal URL %s", e));
 		}
 	}
@@ -104,6 +120,7 @@ public class JaxbUnmarshal {
 			JAXBContext jc = JAXBContext.newInstance(classType);
 		    Unmarshaller u = jc.createUnmarshaller();
             u.setEventHandler(validationEvent);
+			u.setSchema(addSchema(classType));
 
             Object obj = u.unmarshal(new StreamSource(new StringReader(stringbuffer.toString())));
 
@@ -112,17 +129,18 @@ public class JaxbUnmarshal {
             else data = obj;
 
             logger.debug(String.format("isValidating %s", validationEvent.isValidating() ));
-		} catch (JAXBException e) {
+		} catch (JAXBException | SAXException e) {
 			logger.error(String.format("JaxbUnmarshal StringBuffer %s", e));
 		}	
 	}
 	
-	public JaxbUnmarshal(Node node, Class<?> classType) throws IOException {
+	public JaxbUnmarshal(Node node, Class[] classType) throws IOException {
 		logger.debug(String.format("read Node %s", node));
 		try {			
 		    Source xmlSource = new DOMSource(node);
 		    Unmarshaller u = JAXBContext.newInstance(classType).createUnmarshaller();
             u.setEventHandler(validationEvent);
+			u.setSchema(addSchema(classType));
 
             Object obj = u.unmarshal(xmlSource);
 
@@ -131,7 +149,7 @@ public class JaxbUnmarshal {
             else data = obj;
 
             logger.debug(String.format("isValidating %s", validationEvent.isValidating() ));
-		}catch (JAXBException e) {
+		}catch (JAXBException | SAXException e) {
 			logger.error(String.format("JaxbUnmarshal Node %s", e));
 		}			
 	}
@@ -172,6 +190,7 @@ public class JaxbUnmarshal {
 			Unmarshaller u = jc.createUnmarshaller();
 			ValidationEventCollector vec = new ValidationEventCollector();
 			u.setEventHandler( vec );
+			u.setSchema(addSchema(classType));
 
 			// turn off the JAXB provider's default validation mechanism to
 			// avoid duplicate validation
@@ -201,6 +220,7 @@ public class JaxbUnmarshal {
 		try {
 			JAXBContext jc = JAXBContext.newInstance(classType);
 		    Unmarshaller u = jc.createUnmarshaller();
+			u.setSchema(addSchema(classType));
 
             Object obj = u.unmarshal(xmlStreamReader);
 
@@ -209,7 +229,7 @@ public class JaxbUnmarshal {
             else data = obj;
 
             logger.debug(String.format("isValidating %s", validationEvent.isValidating() ));
-		} catch (JAXBException e) {
+		} catch (JAXBException | SAXException e) {
 			logger.error(String.format("JaxbUnmarshal XMLStreamReader %s", e));
 		}		
 	}
@@ -219,6 +239,7 @@ public class JaxbUnmarshal {
 		try {
 			JAXBContext jc = JAXBContext.newInstance(classType);
 		    Unmarshaller u = jc.createUnmarshaller();
+			u.setSchema(addSchema(classType));
 
             Object obj = u.unmarshal(xmlEventReader);
 
@@ -227,7 +248,7 @@ public class JaxbUnmarshal {
             else data = obj;
 
             logger.debug(String.format("isValidating %s", validationEvent.isValidating() ));
-		}catch (JAXBException e) {
+		}catch (JAXBException | SAXException e) {
 			logger.error(String.format("JaxbUnmarshal XMLEventReader %s", e));
 		}			
 	}
@@ -239,4 +260,25 @@ public class JaxbUnmarshal {
     public boolean isValidating() {
         return validationEvent.isValidating();
     }
+
+	public ValidationHandler getValidationEvent() {
+		return validationEvent;
+	}
+
+	private Schema addSchema(Class[] classType) throws SAXException {
+		List<Source> list = new ArrayList<>();
+
+		Stream.of(classType).forEach(type ->{
+			if(Objects.equals(type, A2AType.class))	list.add(new StreamSource(A2AType.class.getClassLoader().getResource("A2AAllInOne_v.1.7.xsd").toExternalForm()));
+			if(Objects.equals(type, OaiDcType.class)) list.add(new StreamSource(OaiDcType.class.getClassLoader().getResource("oai_dc.xsd").toExternalForm()));
+			if(Objects.equals(type, Ead.class)) list.add(new StreamSource(Ead.class.getClassLoader().getResource("apeEAD.xsd").toExternalForm()));
+			if(Objects.equals(type, Memorix.class)) list.add(new StreamSource(Memorix.class.getClassLoader().getResource("MRX-API-ANY.xsd").toExternalForm()));
+			if(Objects.equals(type, OAIPMHtype.class)) list.add(new StreamSource(OAIPMHtype.class.getClassLoader().getResource("OAI-PMH.xsd").toExternalForm()));
+			if(Objects.equals(type, RDF.class)) list.add(new StreamSource(RDF.class.getClassLoader().getResource("GENE.xsd").toExternalForm()));
+		});
+
+		Source[] schemaFiles = list.toArray(new Source[list.size()]);
+		SchemaFactory sf = SchemaFactory.newInstance( XMLConstants.W3C_XML_SCHEMA_NS_URI );
+		return sf.newSchema( schemaFiles );
+	}
 }

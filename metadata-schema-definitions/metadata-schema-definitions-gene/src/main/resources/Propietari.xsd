@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://www.gencat.cat/"
+        xmlns:gene="http://www.gencat.cat/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+    <xs:include schemaLocation="Diccionaris/PropietariArqueologic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/PropietariArquitectonic.xsd"/>
+
+    <xs:annotation>
+        <xs:documentation>
+            GENE First Implementation Schema: Contextual elements (vocabulary terms)
+        </xs:documentation>
+    </xs:annotation>
+
+    <xs:element name="PropietariType">
+        <xs:complexType>
+            <xs:annotation>
+                <xs:documentation>
+                    Tipus de Regim.
+                </xs:documentation>
+            </xs:annotation>
+            <xs:complexContent>
+                <xs:extension base="gene:SequencePropietariType">
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="SequencePropietariType">
+        <xs:complexContent>
+            <xs:extension base="rdf:IdentificadorType">
+                <xs:sequence>
+                    <xs:element name="tipusRegim" minOccurs="0">
+                        <xs:complexType>
+                            <xs:choice>
+                                <xs:element name="tipusRegimArqueologic" type="gene:PropietariArqueologicType"/>
+                                <xs:element name="tipusRegimArquitectonic" type="gene:PropietariArquitectonicType"/>
+                            </xs:choice>
+                        </xs:complexType>
+                    </xs:element>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+
+</xs:schema>
