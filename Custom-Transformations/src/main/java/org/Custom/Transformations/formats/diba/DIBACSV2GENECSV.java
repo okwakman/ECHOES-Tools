@@ -1,26 +1,30 @@
 package org.Custom.Transformations.formats.diba;
 
-import cat.gencat.Estil;
-import org.Custom.Transformations.formats.gene.arquitectura.EstilType;
-import org.Custom.Transformations.formats.gene.common.Cronologia;
+import cat.gencat.*;
+import org.Custom.Transformations.formats.gene.common.Comarca;
 import org.Custom.Transformations.formats.gene.common.Municipi;
-import org.Custom.Transformations.formats.gene.common.MunicipiType;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DIBACSV2GENECSV {
+    private Map<String, Municipi> municipis;
+    private Map<Integer, Comarca> comarques;
+
     private HashMap<String, String> generalColumnsMapping;
     private HashMap<String, String> archeologyColumnsMapping;
     private HashMap<String, String> archeologyStaticColumnsMapping;
@@ -28,22 +32,22 @@ public class DIBACSV2GENECSV {
     private HashMap<String, String> architectureColumnsMapping;
     private String[] fields = {
             // Comuns
-            "codi", "tipus_registre", "agregat", "cod_comarca", "cod_sstt", "data_fi", "descripció", "nom",
+            "codi", "tipus_registre", "nom_actual", "agregat", "Municipi_Comarca", "Proteccions", "cod_sstt", "data_fi", "descripcio", "nom", "usr_alta", "d_alta", "d_mod",
             // Arqueologia
-            "num_jaciment", "nom_actual", "nom_altres", "cod-mcpi",
-            "coor_utm_long", "coor_utm_lat", "context_descripció", "tip_jac", "codi_crono_inici",
-            "cod_crono_fi", "data_inici", "tip_noticia", "data",
+            "num_jaciment", "nom_altres",
+            "coor_utm_long", "coor_utm_lat", "context_desc", "tip_jac", "Cronologies", "data_inici", "tip_noticia", "data",
             "notes", "tip_conservació", "consDescripció", "tip_prot_legal", "class_prot_legal",
-            "num_reg_bcin_cpcc", "num_reg_estatal", "tip-regim",
+            "tip-regim",
             // Arquitectura
-            "cod_arq", "nom_edifici", "altres_noms", "adreça", "cod_mcpi",
-            "utm_x", "utm_y", "cod_arq_utilitzacio", "original_actual", "cod_epoca_inicial",
-            "cod_epoca_final", "data_inicial", "cod_estil", "cognoms", "funcio", "any_inici",
+            "cod_arq", "altres_noms", "adreça",
+            "utm_x", "utm_y", "cod_arq_utilitzacio", "original_actual", "Epoques", "data_inicial", "cod_estil", "cognoms", "funcio", "any_inici",
             "any_fi", "notícies_històriques", "cod_estat_global", "classificacio", "entorn",
-            "Numero_bcin", "Numero_bic", "ct_cultura_bcil", "cod_regim"
+            "cod_regim"
     };
 
     public DIBACSV2GENECSV() {
+        municipis = new org.Custom.Transformations.formats.gene.common.MunicipiType();
+        comarques = new org.Custom.Transformations.formats.gene.common.ComarcaType();
         fillGeneralColumnsMapping();
         fillArcheologyStaticColumnsMapping();
         fillArcheologyColumnsMapping();
@@ -74,14 +78,25 @@ public class DIBACSV2GENECSV {
         csvPrinter.flush();
     }
 
+    private static String getCronologiaValue(Object cronologia) {
+        if (cronologia instanceof CronologiaArquitectonicType) {
+            return ((CronologiaArquitectonicType) cronologia).value();
+        } else if (cronologia instanceof CronologiaArqueologicType) {
+            return ((CronologiaArqueologicType) cronologia).value();
+        } else if (cronologia instanceof EstilEpocaType) {
+            return ((EstilEpocaType) cronologia).value();
+        }
+        return null;
+    }
+
     private HashMap<String, String> getCalculatedArchitectureColumns(CSVRecord csvRecord) {
         HashMap<String, String> columns = new HashMap<>();
         columns.put("cod_arq", csvRecord.get("Poblacio") + ":" + csvRecord.get("NumFitxa"));
         if (csvRecord.isSet("Poblacio")) {
-            Municipi municipi = getMunicipi(csvRecord.get("Poblacio"));
+            MunicipiType municipi = getMunicipi(csvRecord.get("Poblacio"));
             if (municipi != null) {
-                columns.put("cod_mcpi", municipi.getId());
-                columns.put("cod_comarca", municipi.getId_comarca().toString());
+                String comarca = getComarcaFromMunicipi(municipi.value());
+                columns.put("Municipi_Comarca", municipi.value() + " (" + comarca + ")");
             }
         }
         if (csvRecord.isSet("Any")) {
@@ -96,24 +111,19 @@ public class DIBACSV2GENECSV {
             }
         }
         if (csvRecord.isSet("Segle")) {
-            Cronologia[] cronologies = getCronologiaFromSegle(csvRecord.get("Segle"), true);
-            if (cronologies[0] != null) {
-                columns.put("cod_epoca_inicial", cronologies[0].getCodi());
-                if (!columns.containsKey("data_inicial")) {
-                    columns.put("data_inicial", cronologies[0].getAny_inici().toString());
+            Datacio datacio = getCronologiaFromSegle(csvRecord.get("Segle"), true);
+            if (!datacio.getCronologiaInicial().isEmpty()){
+                String epoca = getCronologiaValue(datacio.getCronologiaInicial().get(0));
+                if (!datacio.getCronologiaFinal().isEmpty()){
+                    epoca += " - " + getCronologiaValue(datacio.getCronologiaFinal().get(0));
                 }
-            }
-            if (cronologies[1] != null) {
-                columns.put("cod_epoca_final", cronologies[1].getCodi());
-                if (!columns.containsKey("data_fi")) {
-                    columns.put("data_fi", cronologies[1].getAny_fi().toString());
-                }
+                columns.put("Epoques", epoca);
             }
         }
         if (csvRecord.isSet("EstatConservacio")) {
-            int codiConservacio = getCodiConservacio(csvRecord.get("EstatConservacio"), true);
-            if (codiConservacio != -1) {
-                columns.put("cod_estat_global", String.valueOf(codiConservacio));
+            String codiConservacio = getCodiConservacio(csvRecord.get("EstatConservacio"), true);
+            if (codiConservacio != null) {
+                columns.put("cod_estat_global", codiConservacio);
             }
         }
         if (csvRecord.isSet("Titularitat")) {
@@ -124,7 +134,7 @@ public class DIBACSV2GENECSV {
         }
         if (csvRecord.isSet("Autor")) {
             String autor = csvRecord.get("Autor").trim();
-            if (!autor.equals(".") && !autor.equals("-")){
+            if (!autor.equals(".") && !autor.equals("-")) {
                 columns.put("nom", autor);
             }
         }
@@ -132,20 +142,27 @@ public class DIBACSV2GENECSV {
             String estil = csvRecord.get("Estil").trim();
             String[] estils = estil.split(",|\\-|/");
             List<String> estilsList = new ArrayList<>();
-            EstilType estilType = new EstilType();
-            for (String estil_sep : estils){
+            List<String> estilsEnum = new ArrayList<>(Arrays.asList(getNames(EstilArquitectonicType.class)));
+            estilsEnum.addAll(new ArrayList<>(Arrays.asList(getNames(EstilEpocaType.class))));
+            for (String estil_sep : estils) {
                 String estil_sep_trim = estil_sep.trim();
-                if (estilType.containsValue(estil_sep_trim)){
-                    for (Map.Entry<Integer, String> estilEntry : estilType.entrySet()){
-                        if (estilEntry.getValue().equals(estil_sep_trim)){
-                            estilsList.add(estilEntry.getKey().toString());
+                if (estilsEnum.contains(estil_sep_trim)) {
+                    for (String estilValue : estilsEnum) {
+                        if (estilValue.equals(estil_sep_trim)) {
+                            estilsList.add(estilValue);
                         }
                     }
                 }
             }
-            if (estilsList.size() > 0){
+            if (estilsList.size() > 0) {
                 columns.put("cod_estil", String.join("//", estilsList));
             }
+        }
+        if (csvRecord.isSet("DataReg")) {
+            columns.put("d_alta", DibaDataToGene(csvRecord.get("DataReg")));
+        }
+        if (csvRecord.isSet("DataMod")) {
+            columns.put("d_mod", DibaDataToGene(csvRecord.get("DataMod")));
         }
         return columns;
     }
@@ -154,10 +171,10 @@ public class DIBACSV2GENECSV {
         HashMap<String, String> columns = new HashMap<>();
         columns.put("num_jaciment", csvRecord.get("Poblacio") + ":" + csvRecord.get("NumFitxa"));
         if (csvRecord.isSet("Poblacio")) {
-            Municipi municipi = getMunicipi(csvRecord.get("Poblacio"));
+            MunicipiType municipi = getMunicipi(csvRecord.get("Poblacio"));
             if (municipi != null) {
-                columns.put("cod-mcpi", municipi.getId());
-                columns.put("cod_comarca", municipi.getId_comarca().toString());
+                String comarca = getComarcaFromMunicipi(municipi.value());
+                columns.put("Municipi_Comarca", municipi.value() + " (" + comarca + ")");
             }
         }
         if (csvRecord.isSet("Any")) {
@@ -171,25 +188,22 @@ public class DIBACSV2GENECSV {
                 }
             }
         }
+
         if (csvRecord.isSet("Segle")) {
-            Cronologia[] cronologies = getCronologiaFromSegle(csvRecord.get("Segle"), false);
-            if (cronologies[0] != null) {
-                columns.put("codi_crono_inici", cronologies[0].getCodi());
-                if (!columns.containsKey("data_inici")) {
-                    columns.put("data_inici", cronologies[0].getAny_inici().toString());
+            Datacio datacio = getCronologiaFromSegle(csvRecord.get("Segle"), false);
+            if (!datacio.getCronologiaInicial().isEmpty()){
+                String epoca = getCronologiaValue(datacio.getCronologiaInicial().get(0));
+                if (!datacio.getCronologiaFinal().isEmpty()){
+                    epoca += " - " + getCronologiaValue(datacio.getCronologiaFinal().get(0));
                 }
-            }
-            if (cronologies[1] != null) {
-                columns.put("cod_crono_fi", cronologies[1].getCodi());
-                if (!columns.containsKey("data_fi")) {
-                    columns.put("data_fi", cronologies[1].getAny_fi().toString());
-                }
+                columns.put("Epoques", epoca);
             }
         }
+
         if (csvRecord.isSet("EstatConservacio")) {
-            int codiConservacio = getCodiConservacio(csvRecord.get("EstatConservacio"), false);
-            if (codiConservacio != -1) {
-                columns.put("tip_conservació", String.valueOf(codiConservacio));
+            String codiConservacio = getCodiConservacio(csvRecord.get("EstatConservacio"), false);
+            if (codiConservacio != null) {
+                columns.put("tip_conservació", codiConservacio);
             }
         }
         if (csvRecord.isSet("Titularitat")) {
@@ -198,11 +212,17 @@ public class DIBACSV2GENECSV {
                 columns.put("tip-regim", codiRegim);
             }
         }
-        if (csvRecord.isSet("Codi")){
+        if (csvRecord.isSet("Codi")) {
             String tip_jac = CodiToTipusJaciment(csvRecord.get("Codi"));
-            if (tip_jac != null){
+            if (tip_jac != null) {
                 columns.put("tip_jac", tip_jac);
             }
+        }
+        if (csvRecord.isSet("DataReg")) {
+            columns.put("d_alta", DibaDataToGene(csvRecord.get("DataReg")));
+        }
+        if (csvRecord.isSet("DataMod")) {
+            columns.put("d_mod", DibaDataToGene(csvRecord.get("DataMod")));
         }
         return columns;
     }
@@ -222,14 +242,14 @@ public class DIBACSV2GENECSV {
                 switch (field) {
                     case "cod_arq":
                     case "nom":
-                    case "cod_comarca":
-                    case "data_fi":
-                    case "cod_mcpi":
-                    case "cod_epoca_inicial":
-                    case "cod_epoca_final":
+                    case "Municipi_Comarca":
+                    case "Epoques":
                     case "data_inicial":
+                    case "data_fi":
                     case "cod_estat_global":
                     case "cod_regim":
+                    case "d_alta":
+                    case "d_mod":
                         if (calcColumns.containsKey(field)) {
                             recordToAdd = calcColumns.get(field);
                         }
@@ -238,6 +258,14 @@ public class DIBACSV2GENECSV {
             record.add(recordToAdd);
         }
         return record;
+    }
+
+    private String DibaDataToGene(String dataOrigen){
+        if (dataOrigen.isEmpty()) return "";
+        DateTimeFormatter formatOrigen = DateTimeFormatter.ofPattern("MM/dd/yy H:mm:ss");
+        DateTimeFormatter formatDesti = DateTimeFormatter.ofPattern("dd/MM/yyyy[ H:mm]");
+        LocalDate date = LocalDate.parse(dataOrigen, formatOrigen);
+        return date.format(formatDesti);
     }
 
     private Iterable<String> processArcheologyColumns(CSVRecord csvRecord) {
@@ -254,15 +282,15 @@ public class DIBACSV2GENECSV {
             } else {
                 switch (field) {
                     case "num_jaciment":
-                    case "cod_comarca":
+                    case "Municipi_Comarca":
                     case "data_fi":
-                    case "cod-mcpi":
-                    case "codi_crono_inici":
-                    case "cod_crono_fi":
                     case "data_inici":
                     case "tip_conservació":
+                    case "Cronologies":
                     case "tip-regim":
                     case "tip_jac":
+                    case "d_alta":
+                    case "d_mod":
                         if (calcColumns.containsKey(field)) {
                             recordToAdd = calcColumns.get(field);
                         }
@@ -276,15 +304,17 @@ public class DIBACSV2GENECSV {
     private void fillGeneralColumnsMapping() {
         generalColumnsMapping = new HashMap<>();
         generalColumnsMapping.put("codi", "Inventari");
-        generalColumnsMapping.put("descripció", "Descripcio");
+        generalColumnsMapping.put("descripcio", "Descripcio");
+        generalColumnsMapping.put("nom_actual", "Denom");
+        generalColumnsMapping.put("usr_alta", "AutorFitxa");
+        generalColumnsMapping.put("Proteccions", "DescrProtec");
     }
 
     private void fillArcheologyColumnsMapping() {
         archeologyColumnsMapping = new HashMap<>();
-        archeologyColumnsMapping.put("nom_actual", "Denom");
         archeologyColumnsMapping.put("coor_utm_long", "X");
         archeologyColumnsMapping.put("coor_utm_lat", "Y");
-        archeologyColumnsMapping.put("context_descripció", "Emplacament");
+        archeologyColumnsMapping.put("context_desc", "Emplacament");
         archeologyColumnsMapping.put("notes", "Historia");
         archeologyColumnsMapping.put("consDescripció", "NotesConservacio");
     }
@@ -301,7 +331,6 @@ public class DIBACSV2GENECSV {
 
     private void fillArchitectureColumnsMapping() {
         architectureColumnsMapping = new HashMap<>();
-        architectureColumnsMapping.put("nom_edifici", "Denom");
         architectureColumnsMapping.put("adreça", "Ubicacio");
         architectureColumnsMapping.put("utm_x", "X");
         architectureColumnsMapping.put("utm_y", "Y");
@@ -313,23 +342,25 @@ public class DIBACSV2GENECSV {
         return !record.get("Codi").equals("1.4");
     }
 
-    private Municipi getMunicipi(String poblacio) {
-        for (Municipi municipi : new MunicipiType().values()) {
-            if (normalizedEquals(poblacio, municipi.getNom())) {
+    private MunicipiType getMunicipi(String poblacio) {
+        for (MunicipiType municipi : MunicipiType.values()) {
+            if (normalizedEquals(poblacio, municipi.value())) {
                 return municipi;
             }
         }
         return null;
     }
 
-    private Cronologia[] getCronologiaFromSegle(String segles, boolean isArchitecture) {
-        Cronologia[] cronologiaIniciFi = new Cronologia[2];
-        HashMap<String, Cronologia> cronologies;
+    private Datacio getCronologiaFromSegle(String segles, boolean isArchitecture) {
+        Datacio datacio = new Datacio();
+        List<String> cronologies;
+        List<String> cronologiesEpoca;
         if (isArchitecture) {
-            cronologies = new org.Custom.Transformations.formats.gene.arquitectura.CronologiaType();
+            cronologies = new ArrayList<>(Arrays.asList(getValues(CronologiaArquitectonicType.class)));
         } else {
-            cronologies = new org.Custom.Transformations.formats.gene.arqueologia.CronologiaType();
+            cronologies = new ArrayList<>(Arrays.asList(getValues(CronologiaArqueologicType.class)));
         }
+        cronologiesEpoca = new ArrayList<>(Arrays.asList(getValues(EstilEpocaType.class)));
         String segleInici = "";
         String segleFi = "";
         String[] seglesSep = segles.split("-");
@@ -339,19 +370,31 @@ public class DIBACSV2GENECSV {
         if (seglesSep.length > 1) {
             segleFi = seglesSep[1].trim().toLowerCase();
         }
-        for (Map.Entry<String, Cronologia> cronologia : cronologies.entrySet()) {
-            if (normalizedEquals(cronologia.getValue().getDescripcio(), segleInici)) {
-                cronologiaIniciFi[0] = cronologia.getValue();
-                break;
+        for (String cronologia : cronologies) {
+            if (normalizedEquals(cronologia, segleInici)) {
+                if (isArchitecture) {
+                    datacio.getCronologiaInicial().add(CronologiaArquitectonicType.fromValue(cronologia));
+                } else {
+                    datacio.getCronologiaInicial().add(CronologiaArqueologicType.fromValue(cronologia));
+                }
+            }
+            if (normalizedEquals(cronologia, segleFi)) {
+                if (isArchitecture) {
+                    datacio.getCronologiaFinal().add(CronologiaArquitectonicType.fromValue(cronologia));
+                } else {
+                    datacio.getCronologiaFinal().add(CronologiaArqueologicType.fromValue(cronologia));
+                }
             }
         }
-        for (Map.Entry<String, Cronologia> cronologia : cronologies.entrySet()) {
-            if (normalizedEquals(cronologia.getValue().getDescripcio(), segleFi)) {
-                cronologiaIniciFi[1] = cronologia.getValue();
-                break;
+        for (String cronologia : cronologiesEpoca) {
+            if (normalizedEquals(cronologia, segleInici)) {
+                datacio.getCronologiaInicial().add(EstilEpocaType.fromValue(cronologia));
+            }
+            if (normalizedEquals(cronologia, segleFi)) {
+                datacio.getCronologiaFinal().add(EstilEpocaType.fromValue(cronologia));
             }
         }
-        return cronologiaIniciFi;
+        return datacio;
     }
 
     private int[] getAnys(String anys) {
@@ -367,22 +410,22 @@ public class DIBACSV2GENECSV {
         return null;
     }
 
-    private int getCodiConservacio(String estatConservacio, boolean isArchitecture) {
-        HashMap<Integer, String> conservacions;
+    private String getCodiConservacio(String estatConservacio, boolean isArchitecture) {
+        String[] conservacions;
         if (isArchitecture) {
-            if (normalizedEquals(estatConservacio, "regular")){
+            if (normalizedEquals(estatConservacio, "regular")) {
                 estatConservacio = "Mitjà";
             }
-            conservacions = new org.Custom.Transformations.formats.gene.arquitectura.ConservacioType();
+            conservacions = getNames(ConservacioEstatArquitectonicType.class);
         } else {
-            conservacions = new org.Custom.Transformations.formats.gene.arqueologia.ConservacioType();
+            conservacions = getNames(ConservacioEstatArqueologicType.class);
         }
-        for (Map.Entry<Integer, String> conservacio : conservacions.entrySet()) {
-            if (normalizedEquals(conservacio.getValue(), estatConservacio)) {
-                return conservacio.getKey();
+        for (String conservacio : conservacions) {
+            if (normalizedEquals(conservacio, estatConservacio)) {
+                return conservacio;
             }
         }
-        return -1;
+        return null;
     }
 
     private boolean normalizedEquals(String str1, String str2) {
@@ -390,31 +433,58 @@ public class DIBACSV2GENECSV {
     }
 
     private String getRegimCodi(String regimStr, boolean isArchitecture) {
-        HashMap<String, String> regims;
+        String[] regims;
         if (isArchitecture) {
-            regims = new org.Custom.Transformations.formats.gene.arquitectura.RegimType();
+            regims = getNames(PropietariArquitectonicType.class);
         } else {
-            regims = new org.Custom.Transformations.formats.gene.arqueologia.RegimType();
+            regims = getNames(PropietariArqueologicType.class);
         }
-        for (Map.Entry<String, String> regim : regims.entrySet()) {
-            if (normalizedEquals(regim.getValue(), regimStr)) {
-                return regim.getKey();
+        for (String regim : regims) {
+            if (normalizedEquals(regim, regimStr)) {
+                return regim;
             }
         }
         return null;
     }
 
-    private String CodiToTipusJaciment(String codi){
-        switch (codi){
+    private static String[] getNames(Class<? extends Enum<?>> e) {
+        return Arrays.stream(e.getEnumConstants()).map(Enum::name).toArray(String[]::new);
+    }
+
+    public static String[] getValues(Class<? extends Enum<?>> e) {
+        return Arrays.stream(e.getEnumConstants()).map(DIBACSV2GENECSV::getValueOfEnum).toArray(String[]::new);
+    }
+
+    public static String getValueOfEnum(Enum<?> e){
+        String value = null;
+        try {
+            Method method = e.getClass().getMethod("value");
+            value = (String) method.invoke(e);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
+            e1.printStackTrace();
+        }
+        return value;
+    }
+
+    private String getComarcaFromMunicipi(String municipi){
+        for (Map.Entry<String, org.Custom.Transformations.formats.gene.common.Municipi> municipiType : municipis.entrySet()) {
+            if (normalizedEquals(municipiType.getValue().getNom(), municipi)) {
+                return comarques.get(municipiType.getValue().getId_comarca()).getNom();
+            }
+        }
+        return null;
+    }
+    private String CodiToTipusJaciment(String codi) {
+        switch (codi) {
             // Patrimoni immoble - Jaciment arqueològic
             case "1.4":
                 // Jaciment arqueològic
                 return "2";
             // Patrimoni immoble - Element arquitectònic
             case "1.3":
-            // Patrimoni moble - Element urbà
+                // Patrimoni moble - Element urbà
             case "2.1":
-            // Patrimoni moble - Objecte
+                // Patrimoni moble - Objecte
             case "2.2":
                 // Element
                 return "6";

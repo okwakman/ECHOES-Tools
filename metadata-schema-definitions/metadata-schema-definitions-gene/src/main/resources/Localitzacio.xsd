@@ -9,37 +9,25 @@
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
     <xs:include schemaLocation="Diccionaris/ServeiTerritorial.xsd"/>
 
-    <xs:annotation>
-        <xs:documentation>
-            GENE First Implementation Schema: Contextual elements (vocabulary terms)
-        </xs:documentation>
-    </xs:annotation>
-
-    <xs:element name="LocalitzacioType">
-        <xs:complexType>
-            <xs:annotation>
-                <xs:documentation>
-                    Dades de localització del bé.
-                </xs:documentation>
-            </xs:annotation>
-            <xs:complexContent>
-                <xs:extension base="gene:SequenceLocalitzacioType">
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
+    <xs:element name="LocalitzacioType" type="gene:Localitzacio">
+        <xs:annotation>
+            <xs:documentation>
+                Dades de localització del bé.
+            </xs:documentation>
+        </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="SequenceLocalitzacioType">
+    <xs:complexType name="Localitzacio">
         <xs:complexContent>
             <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
-                    <xs:element name="territori" maxOccurs="unbounded" type="rdf:ResourceType"/>
-                    <xs:element name="adreca" minOccurs="0" type="rdf:LiteralType" />
+                    <xs:element name="territori" minOccurs="0" maxOccurs="unbounded" type="rdf:ResourceType"/>
+                    <xs:element name="adreca" minOccurs="0" type="rdf:LiteralType"/>
                     <xs:element name="agregat" minOccurs="0" type="rdf:LiteralType"/>
                     <xs:element name="serveiTerritorial" minOccurs="0" type="gene:ServeiTerritorialType"/>
-                    <xs:element name="X" minOccurs="0" type="xs:float" />
-                    <xs:element name="Y" minOccurs="0" type="xs:float" />
-                    <xs:element name="locDescripcio" minOccurs="0" type="rdf:LiteralType" />
+                    <xs:element name="X" minOccurs="0" type="xs:float"/>
+                    <xs:element name="Y" minOccurs="0" type="xs:float"/>
+                    <xs:element name="locDescripcio" minOccurs="0" type="rdf:LiteralType"/>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>

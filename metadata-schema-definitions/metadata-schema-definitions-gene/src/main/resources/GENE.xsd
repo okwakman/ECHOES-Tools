@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://www.gencat.cat/"
+           xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
            elementFormDefault="qualified"
-           attributeFormDefault="qualified"
-           xmlns:gene="http://www.gencat.cat/">
-
-    <xs:annotation>
-        <xs:documentation>GENE First Implementation Schema: wrapped up as RDF/XML</xs:documentation>
-    </xs:annotation>
+           attributeFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
+
+    <xs:annotation>
+        <xs:documentation>GENE group</xs:documentation>
+    </xs:annotation>
+
     <xs:include schemaLocation="Property.xsd"/>
     <xs:include schemaLocation="Identificacio.xsd"/>
     <xs:include schemaLocation="Localitzacio.xsd"/>
@@ -26,27 +27,6 @@
     <xs:include schemaLocation="Propietari.xsd"/>
     <xs:include schemaLocation="InformacioFitxa.xsd"/>
 
-    <xs:element name="RDF">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element maxOccurs="unbounded" ref="gene:IdentificacioType"/>
-                <xs:element maxOccurs="unbounded" ref="gene:LocalitzacioType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:TerritoriType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:TipologiaType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:UsType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:DatacioType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:EstilType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:AutorType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:DescripcioType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:NoticiaHistoricaType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:ConservacioType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:ProteccioType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:PropietariType"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:InformacioFitxaType"/>
-
-                <xs:element maxOccurs="unbounded" ref="gene:PropertyType"/>
-            </xs:sequence>
-        </xs:complexType>
-    </xs:element>
+    <xs:element name="proveidor" type="rdf:ResourceType"/>
 
 </xs:schema>

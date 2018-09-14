@@ -29,10 +29,10 @@ public class DIBACSVGENECSVDedupInfo {
         HashMap<String, List<String>> identifiersMap = new HashMap<>();
         for (CSVRecord dibaRecord : dibaRecords) {
             for (CSVRecord geneRecord : listGeneRecords) {
-                if (isRegistryEquals(dibaRecord, geneRecord)){
+                if (isRegistryEquals(dibaRecord, geneRecord)) {
                     String geneIdentifier = getGeneIdentifier(geneRecord);
                     String dibaIdentifier = getDibaIdentifier(dibaRecord);
-                    if (!identifiersMap.containsKey(dibaIdentifier)){
+                    if (!identifiersMap.containsKey(dibaIdentifier)) {
                         identifiersMap.put(dibaIdentifier, new ArrayList<>());
                     }
                     identifiersMap.get(dibaIdentifier).add(geneIdentifier);
@@ -42,13 +42,13 @@ public class DIBACSVGENECSVDedupInfo {
         return identifiersMap;
     }
 
-    private String getDibaIdentifier(CSVRecord record){
+    private String getDibaIdentifier(CSVRecord record) {
         return GENECSV2GENERDF.getIdentificadorIdentifier(isArchitecture(record), record.get("Poblacio") + ":" + record.get("NumFitxa"));
     }
 
-    private String getGeneIdentifier(CSVRecord record){
+    private String getGeneIdentifier(CSVRecord record) {
         String id;
-        if (isGeneArchitecture){
+        if (isGeneArchitecture) {
             id = record.get("cod_arq");
         } else {
             id = record.get("num_jaciment");
@@ -56,44 +56,39 @@ public class DIBACSVGENECSVDedupInfo {
         return GENECSV2GENERDF.getIdentificadorIdentifier(isGeneArchitecture, id);
     }
 
-    private boolean isRegistryEquals(CSVRecord dibaRecord, CSVRecord geneRecord){
-        if (!dibaRecord.isSet("DescrProtec")){
+    private boolean isRegistryEquals(CSVRecord dibaRecord, CSVRecord geneRecord) {
+        if (!dibaRecord.isSet("DescrProtec") && !dibaRecord.isSet("Inventari")) {
             return false;
         }
-        String proteccioDiba = dibaRecord.get("DescrProtec");
-        if (isGeneArchitecture && dibaRecord.isSet("Inventari")){
+        String proteccioDiba = null;
+        if (dibaRecord.isSet("DescrProtec")) {
+            proteccioDiba = dibaRecord.get("DescrProtec");
+        }
+        String proteccioGene = null;
+        if (geneRecord.isSet("Proteccions")) {
+            proteccioGene = geneRecord.get("Proteccions");
+        }
+        if (isGeneArchitecture && dibaRecord.isSet("Inventari")) {
             int dibaIPA = getIPADiba(dibaRecord.get("Inventari"));
             int geneIPA = Integer.parseInt(geneRecord.get("cod_arq"));
-            if (dibaIPA == geneIPA){
+            if (dibaIPA == geneIPA) {
                 return true;
             }
         }
-        if (geneRecord.isSet("ct_cultura_bcil")){
-            int dibaBCIL = getBCIL(proteccioDiba);
-            int geneBCIL = getBCIL(geneRecord.get("ct_cultura_bcil"));
-            if (dibaBCIL != -1 && dibaBCIL == geneBCIL){
-                return true;
-            }
+        if (proteccioDiba == null || proteccioGene == null) {
+            return false;
+        }
+
+        int dibaBCIL = getBCIL(proteccioDiba);
+        int geneBCIL = getBCIL(proteccioGene);
+        if (dibaBCIL != -1 && dibaBCIL == geneBCIL) {
+            return true;
         }
         int dibaBCIN = getBCIN(proteccioDiba);
-        if (dibaBCIN != -1){
-            if (geneRecord.isSet("Numero_bcin")){
-                int geneBCIN = getBCIN(geneRecord.get("Numero_bcin"));
-                if (dibaBCIN == geneBCIN){
-                    return true;
-                }
-            }
-            if (geneRecord.isSet("num_reg_bcin_cpcc")){
-                int geneBCIN = getBCIN(geneRecord.get("num_reg_bcin_cpcc"));
-                if (dibaBCIN == geneBCIN){
-                    return true;
-                }
-            }
-        }
-        return false;
+        return dibaBCIN != -1 && getBCIN(geneRecord.get("Proteccions")) == dibaBCIN;
     }
 
-    private int getIPADiba(String text){
+    private int getIPADiba(String text) {
         Pattern pattern = Pattern.compile("(?i)(?:IPAC?[-\\s_]*(?:CA)?[-\\s_]*(?:n\\s*º)?[-:\\s_]*0*(\\d+))|(?:(?:n\\s*º)?[-:\\s_]*0*(\\d+)[-\\s_]*IPAC?[-\\s_]*(?:CA)?)");
         Matcher matcher = pattern.matcher(text);
         if (matcher.find() && matcher.group(1) != null) {
@@ -102,7 +97,7 @@ public class DIBACSVGENECSVDedupInfo {
         return -1;
     }
 
-    private int getBCIL(String text){
+    private int getBCIL(String text) {
         Pattern pattern = Pattern.compile("(?i)0*(\\d+)[\\s-_]*[il|]");
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
@@ -111,11 +106,11 @@ public class DIBACSVGENECSVDedupInfo {
         return -1;
     }
 
-    private int getBCIN(String text){
+    private int getBCIN(String text) {
         Pattern pattern = Pattern.compile("(?i)0*(?:(\\d+)[\\s-_]*(?:MH|CPCC|CCPC))|(?:(?:MH|CPCC|CCPC)[\\s-_]*0*(\\d+))");
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
-            if (matcher.group(1) != null){
+            if (matcher.group(1) != null) {
                 return Integer.valueOf(matcher.group(1));
             }
         }

@@ -8,27 +8,15 @@
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
 
-    <xs:annotation>
-        <xs:documentation>
-            GENE First Implementation Schema: Contextual elements (vocabulary terms)
-        </xs:documentation>
-    </xs:annotation>
-
-    <xs:element name="NoticiaHistoricaType">
-        <xs:complexType>
-            <xs:annotation>
-                <xs:documentation>
-                    Noticia Historica relacionada amb el bé.
-                </xs:documentation>
-            </xs:annotation>
-            <xs:complexContent>
-                <xs:extension base="gene:SequenceNoticiaHistoricaType">
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
+    <xs:element name="NoticiaHistoricaType" type="gene:NoticiaHistorica">
+        <xs:annotation>
+            <xs:documentation>
+                Noticia Historica relacionada amb el bé.
+            </xs:documentation>
+        </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="SequenceNoticiaHistoricaType">
+    <xs:complexType name="NoticiaHistorica">
         <xs:complexContent>
             <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>

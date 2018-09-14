@@ -3,13 +3,8 @@ package org.Custom.Transformations.formats.gene;
 
 import cat.gencat.*;
 import net.sf.saxon.functions.IriToUri;
-import org.Custom.Transformations.formats.gene.arquitectura.UtilitzacioType;
-import org.Custom.Transformations.formats.gene.arquitectura.EstilType;
-import org.Custom.Transformations.formats.gene.arqueologia.TipusJacimentType;
-import org.Custom.Transformations.formats.gene.common.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.w3._1999._02._22_rdf_syntax_ns_.*;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
@@ -19,58 +14,32 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GENECSV2GENERDF extends RDF {
     private static final String SEPARATOR = " // ";
+    private static final String CRONOLOGIA_SEPARATOR = " - ";
+    private static final Pattern MUNICIPI_COMARCA_PATTERN = Pattern.compile("(.*)\\s+\\((.*)\\).*");
+    private static final Pattern BCIN_PATTERN = Pattern.compile(".*BCIN \\((.*)\\).*");
+    private static final Pattern BCIL_PATTERN = Pattern.compile(".*BCIL \\((.*)\\).*");
     private String fileName;
     private boolean isArchitecture;
     private String identificacio = "";
-    private org.Custom.Transformations.formats.gene.arquitectura.CronologiaType arquiCronologiaType;
-    private org.Custom.Transformations.formats.gene.arquitectura.ConservacioType arquiConservacioType;
-    private org.Custom.Transformations.formats.gene.arquitectura.RegimType arquiRegimType;
-    private org.Custom.Transformations.formats.gene.arqueologia.CronologiaType arqueCronologiaType;
-    private org.Custom.Transformations.formats.gene.arqueologia.ConservacioType arqueConservacioType;
-    private org.Custom.Transformations.formats.gene.arqueologia.RegimType arqueRegimType;
-    private MunicipiType municipis;
-    private ComarcaType comarques;
-    private ServeiTerritorialType ssts;
     private String provider;
     private HashMap<String, Territori> territoris;
 
     public GENECSV2GENERDF(String provider, String fileName, boolean isArchitecture) {
         this.provider = provider;
         this.fileName = fileName;
-        this.arquiCronologiaType = new org.Custom.Transformations.formats.gene.arquitectura.CronologiaType();
-        this.arquiConservacioType = new org.Custom.Transformations.formats.gene.arquitectura.ConservacioType();
-        this.arquiRegimType = new org.Custom.Transformations.formats.gene.arquitectura.RegimType();
-        this.arqueCronologiaType = new org.Custom.Transformations.formats.gene.arqueologia.CronologiaType();
-        this.arqueConservacioType = new org.Custom.Transformations.formats.gene.arqueologia.ConservacioType();
-        this.arqueRegimType = new org.Custom.Transformations.formats.gene.arqueologia.RegimType();
-        this.municipis = new MunicipiType();
-        this.comarques = new ComarcaType();
         this.territoris = new HashMap<>();
-        this.ssts = new ServeiTerritorialType();
-        this.isArchitecture = isArchitecture;
-    }
-
-    public GENECSV2GENERDF(String provider, String fileName, boolean isArchitecture, HashMap<Integer, List<String>> arquiDups, HashMap<Integer, List<String>> arqueDups) {
-        this.provider = provider;
-        this.fileName = fileName;
-        this.arquiCronologiaType = new org.Custom.Transformations.formats.gene.arquitectura.CronologiaType();
-        this.arquiConservacioType = new org.Custom.Transformations.formats.gene.arquitectura.ConservacioType();
-        this.arquiRegimType = new org.Custom.Transformations.formats.gene.arquitectura.RegimType();
-        this.arqueCronologiaType = new org.Custom.Transformations.formats.gene.arqueologia.CronologiaType();
-        this.arqueConservacioType = new org.Custom.Transformations.formats.gene.arqueologia.ConservacioType();
-        this.arqueRegimType = new org.Custom.Transformations.formats.gene.arqueologia.RegimType();
-        this.municipis = new MunicipiType();
-        this.comarques = new ComarcaType();
-        this.territoris = new HashMap<>();
-        this.ssts = new ServeiTerritorialType();
         this.isArchitecture = isArchitecture;
     }
 
@@ -78,31 +47,67 @@ public class GENECSV2GENERDF extends RDF {
         Reader in = new FileReader(this.fileName);
         Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
         for (CSVRecord record : records) {
+            Identificacio id = getIdentificacio(record);
+            this.getIdentificacioType().add(id);
             if (isArchitecture) {
-                this.getIdentificacio().add(getArquitecturaIdentificacio(record));
-                this.getLocalitzacio().add(getArquitecturaLocalitzacio(record));
-                this.getTipologia().addAll(getArquitecturaTipologies(record));
-                this.getUs().addAll(getArquitecturaUsos(record));
-                this.getDatacio().add(getArquitecturaDatacio(record));
-                this.getEstil().addAll(getArquitecturaEstils(record));
-                this.getAutor().add(getArquitecturaAutor(record));
-                this.getDescripcio().add(getArquitecturaDescripcio(record));
-                this.getNoticiaHistorica().add(getArquitecturaNoticiaHistorica(record));
-                this.getConservacio().add(getArquitecturaConservacio(record));
-                this.getProteccio().add(getArquitecturaProteccio(record));
-                this.getPropietari().add(getArquitecturaPropietari(record));
+                this.getPropertyType().add(getArquitecturaPropietat(record, id));
+                this.getLocalitzacioType().add(getArquitecturaLocalitzacio(record));
+                this.getTipologiaType().addAll(getArquitecturaTipologies(record));
+                this.getUsType().addAll(getArquitecturaUsos(record));
+                this.getDatacioType().add(getArquitecturaDatacio(record));
+                this.getEstilType().addAll(getArquitecturaEstils(record));
+                this.getAutorType().add(getArquitecturaAutor(record));
+                this.getDescripcioType().add(getArquitecturaDescripcio(record));
+                this.getNoticiaHistoricaType().add(getArquitecturaNoticiaHistorica(record));
+                this.getConservacioType().add(getArquitecturaConservacio(record));
+                this.getProteccioType().add(getArquitecturaProteccio(record));
+                this.getPropietariType().add(getArquitecturaPropietari(record));
             } else {
-                this.getIdentificacio().add(getArqueologiaIdentificacio(record));
-                this.getLocalitzacio().add(getArqueologiaLocalitzacio(record));
-                this.getTipologia().addAll(getArqueologiaTipologies(record));
-                this.getDatacio().add(getArqueologiaDatacio(record));
-                this.getDescripcio().add(getArqueologiaDescripcio(record));
-                this.getNoticiaHistorica().add(getArqueologiaNoticiaHistorica(record));
-                this.getConservacio().add(getArqueologiaConservacio(record));
-                this.getProteccio().add(getArqueologiaProteccio(record));
-                this.getPropietari().add(getArqueologiaPropietari(record));
+                this.getPropertyType().add(getArqueologiaPropietat(record, id));
+                this.getLocalitzacioType().add(getArqueologiaLocalitzacio(record));
+                this.getTipologiaType().addAll(getArqueologiaTipologies(record));
+                this.getDatacioType().add(getArqueologiaDatacio(record));
+                this.getDescripcioType().add(getArqueologiaDescripcio(record));
+                this.getNoticiaHistoricaType().add(getArqueologiaNoticiaHistorica(record));
+                this.getConservacioType().add(getArqueologiaConservacio(record));
+                this.getProteccioType().add(getArqueologiaProteccio(record));
+                this.getPropietariType().add(getArqueologiaPropietari(record));
+            }
+            this.getInformacioFitxaType().add(getInformacioFitxa(record));
+        }
+    }
+
+    private Identificacio getIdentificacio(CSVRecord record) {
+        Identificacio id = new Identificacio();
+        id.setAbout(this.getIdentifier("Identificador"));
+        return id;
+    }
+
+    private InformacioFitxa getInformacioFitxa(CSVRecord record) {
+        if (!hasSomeValue(record, new String[] {"d_alta", "d_mod", "usr_alta"})){
+            return null;
+        }
+        InformacioFitxa infoFitxa = new InformacioFitxa();
+        infoFitxa.setAbout(this.getIdentifier("InformacioFitxa"));
+        if (this.strOrNull(record, "d_alta") != null){
+            try {
+                infoFitxa.setDataCreacioFitxa(getDate(this.strOrNull(record, "d_alta")));
+            } catch (DatatypeConfigurationException e) {
+                e.printStackTrace();
             }
         }
+        if (this.strOrNull(record, "d_mod") != null){
+            try {
+                infoFitxa.setDataModificacioFitxa(getDate(this.strOrNull(record, "d_mod")));
+            } catch (DatatypeConfigurationException e) {
+                e.printStackTrace();
+            }
+        }
+        if (this.literalOrNull(record, "usr_alta") != null){
+            infoFitxa.setAutorFitxa(this.literalOrNull(record, "usr_alta"));
+        }
+        infoFitxa.setIdentificador(getIdentificador());
+        return infoFitxa;
     }
 
     private String getIdentifier(String entity){
@@ -120,56 +125,68 @@ public class GENECSV2GENERDF extends RDF {
     }
 
     // Arqueologia
-    private Identificacio getArqueologiaIdentificacio(CSVRecord record) {
+    private Property getArqueologiaPropietat(CSVRecord record, Identificacio idPare) {
         if (!hasSomeValue(record, new String[] {"num_jaciment"})){
             return null;
         }
-        Identificacio id = new Identificacio();
+        Property id = new Property();
+        id.setSubClassOf(stringToResourceType(idPare.getAbout()));
         this.identificacio = getIdentificadorIdentifier(false, this.strOrNull(record, "num_jaciment"));
         id.setAbout(identificacio);
         {
-            id.setTipusPatrimoni(TipusPatrimoniTipus.ARQUEOLÒGIC);
-            id.setCodiIntern(this.strOrNull(record, "num_jaciment"));
-            if (this.strOrNull(record, "codi") != null){
-                id.setCodiInventari(this.strOrNull(record, "codi"));
+            id.setTipusPatrimoni(PatrimoniTipus.ARQUEOLÒGIC);
+            id.setCodiIntern(this.literalOrNull(record, "num_jaciment"));
+            if (this.literalOrNull(record, "codi") != null){
+                id.setCodiInventari(this.literalOrNull(record, "codi"));
             }
-            id.setNom(this.strOrNull(record, "nom_actual"));
-            id.setAltresNoms(this.strOrNull(record, "nom_altres"));
-            id.getProveidor().add(this.provider);
+            id.setNom(this.literalOrNull(record, "nom_actual"));
+            id.setAltresNoms(this.literalOrNull(record, "nom_altres"));
+            id.setProveidor(this.stringToResourceType(this.provider));
         }
         return id;
     }
 
     private Localitzacio getArqueologiaLocalitzacio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"cod-mcpi", "cod_comarca", "agregat", "cod_sstt", "coor_utm_long", "coor_utm_lat", "context_descripció"})){
+        if (!hasSomeValue(record, new String[] {"Municipi_Comarca", "agregat", "cod_sstt", "coor_utm_long", "coor_utm_lat", "context_desc"})){
             return null;
         }
         Localitzacio loc = new Localitzacio();
         loc.setAbout(this.getIdentifier("Localitzacio"));
         {
-            String[] cod_mcpis = this.getMultivaluedField(record, "cod-mcpi");
-            if (cod_mcpis != null){
-                for (String cod_mcpi : cod_mcpis){
-                    Municipi municipi = municipis.get(cod_mcpi);
-                    String resource = getTerritoriResource(comarques.get(municipi.getId_comarca()).getNom(), municipi.getNom());
-                    Localitzacio.Territori locTerritori = new Localitzacio.Territori();
-                    locTerritori.setResource(resource);
-                    loc.getTerritori().add(locTerritori);
+            List<String> mcpis = new ArrayList<>();
+            List<String> comarques = new ArrayList<>();
+            String[] mcpis_comarques = this.getMultivaluedField(record, "Municipi_Comarca");
+
+            if (mcpis_comarques != null){
+                for (String mcpi_comarca : mcpis_comarques){
+                    Matcher matcher = MUNICIPI_COMARCA_PATTERN.matcher(mcpi_comarca);
+                    if (matcher.matches()){
+                        mcpis.add(matcher.group(1));
+                        comarques.add(matcher.group(2));
+                    }
                 }
             }
-            if (this.strOrNull(record, "agregat") != null){
-                loc.setAgregat(new MancomunitatType().get(this.strOrNull(record, "agregat")));
+
+            for (int i = 0; i < mcpis.size(); i++){
+                List<String> comarcaAsList = new ArrayList<>();
+                comarcaAsList.add(comarques.get(i));
+                loc.getTerritori().add(getTerritoriResource(mcpis.get(i), comarcaAsList));
             }
-            if (this.strOrNull(record, "cod_sstt") != null){
-                loc.setServeiTerritorial(ssts.get(this.strOrNull(record, "cod_sstt")));
+
+            if (this.literalOrNull(record, "agregat") != null){
+                loc.setAgregat(this.literalOrNull(record, "agregat"));
             }
-            if (this.strOrNull(record, "coor_utm_long") != null){
+            if (this.literalOrNull(record, "cod_sstt") != null){
+                String cod_sstt = StringEscapeUtils.unescapeXml(this.strOrNull(record, "cod_sstt"));
+                loc.setServeiTerritorial(getEnumValue(ServeiTerritorialType.class, cod_sstt));
+            }
+            if (this.literalOrNull(record, "coor_utm_long") != null){
                 loc.setX(Float.valueOf(this.strOrNull(record, "coor_utm_long").replace(",", ".")));
             }
-            if (this.strOrNull(record, "coor_utm_lat") != null){
+            if (this.literalOrNull(record, "coor_utm_lat") != null){
                 loc.setY(Float.valueOf(this.strOrNull(record, "coor_utm_lat").replace(",", ".")));
             }
-            loc.setLocDescripcio(this.strOrNull(record, "context_descripció"));
+            loc.setLocDescripcio(this.literalOrNull(record, "context_desc"));
             loc.setIdentificador(getIdentificador());
         }
         return loc;
@@ -179,60 +196,110 @@ public class GENECSV2GENERDF extends RDF {
         if (!hasSomeValue(record, new String[] {"tip_jac"})){
             return new ArrayList<>();
         }
+
         List<Tipologia> tipologies = new ArrayList<>();
-        String[] tipus_jaciments = this.getMultivaluedField(record, "tip_jac");
-        if (tipus_jaciments != null) {
-            for (String tip_jac : tipus_jaciments) {
+        Tipologia tipi = new Tipologia();
+        tipi.setTipologiaArqueologic(TipologiaArqueologicType.ELEMENT);
+        tipi.setAbout(this.getIdentifier("Tipologia"));
+        tipi.setIdentificador(getIdentificador());
+        tipologies.add(tipi);
+
+        String[] tipus_us = this.getMultivaluedField(record, "tip_jac");
+        if (tipus_us != null) {
+            for (String tip_us : tipus_us) {
                 Tipologia tip = new Tipologia();
                 tip.setAbout(this.getIdentifier("Tipologia"));
                 tip.setIdentificador(getIdentificador());
-                {
-                    tip.setTipologia(new TipusJacimentType().get(tip_jac));
+                tip.setTipologiaArqueologic(getEnumValue(TipologiaArqueologicType.class, tip_us));
+                if (tip.getTipologiaArqueologic() != null){
+                    tipologies.add(tip);
                 }
-                tipologies.add(tip);
             }
         }
         return tipologies;
     }
 
     private Datacio getArqueologiaDatacio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"codi_crono_inici", "cod_crono_fi", "data_inici", "data_fi"})){
+        if (!hasSomeValue(record, new String[] {"Cronologies", "data_inici", "data_fi"})){
             return null;
         }
         Datacio dat = new Datacio();
         dat.setAbout(this.getIdentifier("Datacio"));
         dat.setIdentificador(getIdentificador());
         {
-            Cronologia inici = arqueCronologiaType.get(this.strOrNull(record, "codi_crono_inici"));
-            Cronologia fi = arqueCronologiaType.get(this.strOrNull(record, "cod_crono_fi"));
-            if (inici != null){
-                dat.setCronologiaInicial(inici.getDescripcio());
-                if (inici.getAny_inici() != null){
-                    dat.setAnyInici(inici.getAny_inici());
+            String[] anys_inici = this.getMultivaluedField(record, "data_inici");
+            String[] anys_fi = this.getMultivaluedField(record, "data_fi");
+            String[] cronologies = this.getMultivaluedField(record, "Cronologies");
+
+            if (anys_inici != null){
+                for (String any_inici : anys_inici){
+                    dat.getAnyInici().add(Integer.valueOf(any_inici));
                 }
-            } else if (this.strOrNull(record, "data_inici") != null){
-                dat.setAnyInici(Integer.valueOf(this.strOrNull(record, "data_inici")));
             }
-            if (fi != null){
-                dat.setCronologiaFinal(fi.getDescripcio());
-                if (fi.getAny_fi() != null){
-                    dat.setAnyFi(fi.getAny_fi());
+
+            if (anys_fi != null) {
+                for (String any_fi : anys_fi) {
+                    dat.getAnyFi().add(Integer.valueOf(any_fi));
                 }
-            } else if (this.strOrNull(record, "data_fi") != null){
-                dat.setAnyFi(Integer.valueOf(this.strOrNull(record, "data_fi")));
+            }
+
+            if (cronologies != null){
+                for (String cronologia : cronologies){
+                    String[] cronologies_sep = cronologia.trim().split(Pattern.quote(CRONOLOGIA_SEPARATOR));
+                    String cronologia_inicial = StringEscapeUtils.unescapeXml(cronologies_sep[0]);
+                    String cronologia_final = "";
+
+                    Object cronologiaInicial = null;
+                    Object cronologiaFinal = null;
+                    Object cronologiaTemporalFinal = null;
+
+                    if (cronologies_sep.length == 2){
+                        cronologia_final = StringEscapeUtils.unescapeXml(cronologies_sep[1]);
+                    }
+                    try {
+                        cronologiaInicial = getEnumValue(CronologiaArqueologicType.class, cronologia_inicial);
+                        cronologiaFinal = cronologiaInicial;
+                    } catch (Exception ignored){
+                        try {
+                            cronologiaInicial = getEnumValue(EstilEpocaType.class, cronologia_inicial);
+                            cronologiaFinal = cronologiaInicial;
+                        } catch (Exception ignored2){
+                        }
+                    }
+                    if (cronologiaInicial == null){
+                        continue;
+                    }
+
+                    try {
+                        cronologiaTemporalFinal = cronologiaFinal;
+                        cronologiaFinal = getEnumValue(CronologiaArqueologicType.class, cronologia_final);
+                    } catch (Exception ignored){
+                        try {
+                            cronologiaFinal = getEnumValue(EstilEpocaType.class, cronologia_final);
+                        } catch (Exception ignored2){
+                            cronologiaFinal = cronologiaTemporalFinal;
+                        }
+                    }
+
+                    if (cronologiaFinal == null){
+                        cronologiaFinal = cronologiaInicial;
+                    }
+                    dat.getCronologiaInicial().add(cronologiaInicial);
+                    dat.getCronologiaFinal().add(cronologiaFinal);
+                }
             }
         }
         return dat;
     }
 
     private Descripcio getArqueologiaDescripcio(CSVRecord record){
-        if (!hasSomeValue(record, new String[] {"descripció"})){
+        if (!hasSomeValue(record, new String[] {"descripcio"})){
             return null;
         }
         Descripcio desc = new Descripcio();
         desc.setAbout(this.getIdentifier("Descripcio"));
         desc.setIdentificador(getIdentificador());
-        desc.setDescDescripcio(this.strOrNull(record, "descripció"));
+        desc.setDescDescripcio(this.literalOrNull(record, "descripcio"));
         return desc;
     }
 
@@ -244,22 +311,22 @@ public class GENECSV2GENERDF extends RDF {
         noticia.setAbout(this.getIdentifier("NoticiesHistoriques"));
         noticia.setIdentificador(getIdentificador());
         {
-            noticia.setTipusNoticiaHistorica(this.strOrNull(record, "tip_noticia"));
+            noticia.setTipusNoticiaHistorica(this.literalOrNull(record, "tip_noticia"));
             if (this.strOrNull(record, "data") != null){
                 try {
                     noticia.setDataNoticiaHistorica(getDate(this.strOrNull(record, "data")));
-                } catch (ParseException | DatatypeConfigurationException e) {
+                } catch (DatatypeConfigurationException e) {
                     e.printStackTrace();
                 }
             }
-            noticia.setNomNoticiaHistorica(this.strOrNull(record, "nom"));
-            noticia.setComentariNoticiaHistorica(this.strOrNull(record, "notes"));
+            noticia.setNomNoticiaHistorica(this.literalOrNull(record, "nom"));
+            noticia.setComentariNoticiaHistorica(this.literalOrNull(record, "notes"));
         }
         return noticia;
     }
 
     private Conservacio getArqueologiaConservacio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"tip_conservacio", "consDescripció"})){
+        if (!hasSomeValue(record, new String[] {"tip_conservació", "consDescripció"})){
             return null;
         }
         Conservacio con = new Conservacio();
@@ -267,31 +334,45 @@ public class GENECSV2GENERDF extends RDF {
         con.setIdentificador(getIdentificador());
         {
             String conservacio = this.strOrNull(record, "tip_conservació");
-            if (conservacio != null){
-                con.setConservacioEstat(arqueConservacioType.get(Integer.valueOf(conservacio)));
+            if (conservacio != null) {
+                con.setConservacioEstatArqueologic(getEnumValue(ConservacioEstatArqueologicType.class, conservacio));
             }
-            con.setConservacioComentari(this.strOrNull(record, "consDescripció"));
+            con.setConservacioComentari(this.literalOrNull(record, "consDescripció"));
         }
         return con;
     }
 
+    private String getBCIN(String[] proteccions){
+        if (proteccions == null) return null;
+        for (String proteccio : proteccions){
+            Matcher matcher = BCIN_PATTERN.matcher(proteccio);
+            if (matcher.matches()){
+                return matcher.group(1);
+            }
+        }
+        return null;
+    }
+
     private Proteccio getArqueologiaProteccio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"class_prot_legal", "tip_prot_legal", "num_reg_bcin_cpcc", "num_reg_estatal"})){
+        if (!hasSomeValue(record, new String[] {"class_prot_legal", "tip_prot_legal", "Proteccions", "num_reg_estatal"})){
             return null;
         }
         Proteccio proteccio = new Proteccio();
         proteccio.setAbout(this.getIdentifier("Proteccio"));
+        proteccio.setClassificacioArqueologic(ClassificacioArqueologicType.DECLARAT_BCIN);
         proteccio.setIdentificador(getIdentificador());
         {
             String[] classificacions = this.getMultivaluedField(record, "class_prot_legal");
             if (classificacions != null) {
                 for (String classificacio : classificacions) {
-                    proteccio.getClassificacio().add(new org.Custom.Transformations.formats.gene.arqueologia.ProteccioClassificacioType().get(Integer.valueOf(classificacio)));
+                    ClassificacioArqueologicType classArque = ClassificacioArqueologicType.fromValue(classificacio);
+                    proteccio.setClassificacioArqueologic(classArque);
                 }
             }
-            proteccio.setProteccio(this.strOrNull(record, "tip_prot_legal"));
-            proteccio.setBCIN(this.strOrNull(record, "num_reg_bcin_cpcc"));
-            proteccio.setBIC(this.strOrNull(record, "num_reg_estatal"));
+            proteccio.setBCIN(this.stringToLiteralType(this.getBCIN(this.getMultivaluedField(record, "Proteccions"))));
+            proteccio.setPCC(this.stringToLiteralType(this.getBCIL(this.getMultivaluedField(record, "Proteccions"))));
+            proteccio.setBIC(this.literalOrNull(record, "num_reg_estatal"));
+            proteccio.setProteccio(this.literalOrNull(record, "tip_prot_legal"));
         }
         return proteccio;
     }
@@ -306,61 +387,72 @@ public class GENECSV2GENERDF extends RDF {
         {
             String tipusRegim = this.strOrNull(record, "tip-regim");
             if (tipusRegim != null){
-                propietari.setTipusRegim(arqueRegimType.get(tipusRegim));
+                propietari.setTipusRegimArqueologic(getEnumValue(PropietariArqueologicType.class, tipusRegim));
             }
         }
         return propietari;
     }
 
     // Arquitectura
-    private Identificacio getArquitecturaIdentificacio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"cod_arq", "nom_edifici", "altres_noms"})){
+    private Property getArquitecturaPropietat(CSVRecord record, Identificacio idPare) {
+        if (!hasSomeValue(record, new String[] {"cod_arq", "nom_actual", "altres_noms"})){
             return null;
         }
-        Identificacio id = new Identificacio();
+        Property id = new Property();
+        id.setSubClassOf(stringToResourceType(idPare.getAbout()));
         this.identificacio = getIdentificadorIdentifier(true, this.strOrNull(record, "cod_arq"));
         id.setAbout(identificacio);
         {
-            id.setTipusPatrimoni(TipusPatrimoniTipus.ARQUITECTÒNIC);
-            id.setCodiIntern(this.strOrNull(record, "cod_arq"));
-            if (this.strOrNull(record, "codi") != null){
-                id.setCodiInventari(this.strOrNull(record, "codi"));
+            id.setTipusPatrimoni(PatrimoniTipus.ARQUITECTÒNIC);
+            id.setCodiIntern(this.literalOrNull(record, "cod_arq"));
+            if (this.literalOrNull(record, "codi") != null){
+                id.setCodiInventari(this.literalOrNull(record, "codi"));
             }
-            id.setNom(this.strOrNull(record, "nom_edifici"));
-            id.setAltresNoms(this.strOrNull(record, "altres_noms"));
-            id.getProveidor().add(this.provider);
+            id.setNom(this.literalOrNull(record, "nom_actual"));
+            id.setAltresNoms(this.literalOrNull(record, "altres_noms"));
+            id.setProveidor(this.stringToResourceType(this.provider));
         }
         return id;
     }
 
     private Localitzacio getArquitecturaLocalitzacio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"cod_mcpi", "cod_comarca", "agregat", "cod_sstt", "utm_x", "utm_y"})){
+        if (!hasSomeValue(record, new String[] {"Municipi_Comarca", "agregat", "cod_sstt", "utm_x", "utm_y"})){
             return null;
         }
         Localitzacio loc = new Localitzacio();
         loc.setAbout(this.getIdentifier("Localitzacio"));
         {
-            loc.setAdreca(this.strOrNull(record, "adreça"));
-            String[] cod_mcpis = this.getMultivaluedField(record, "cod_mcpi");
-            if (cod_mcpis != null){
-                for (String cod_mcpi : cod_mcpis){
-                    Municipi municipi = municipis.get(cod_mcpi);
-                    String resource = getTerritoriResource(comarques.get(municipi.getId_comarca()).getNom(), municipi.getNom());
-                    Localitzacio.Territori locTerritori = new Localitzacio.Territori();
-                    locTerritori.setResource(resource);
-                    loc.getTerritori().add(locTerritori);
+            List<String> mcpis = new ArrayList<>();
+            List<String> comarques = new ArrayList<>();
+            String[] mcpis_comarques = this.getMultivaluedField(record, "Municipi_Comarca");
+
+            if (mcpis_comarques != null){
+                for (String mcpi_comarca : mcpis_comarques){
+                    Matcher matcher = MUNICIPI_COMARCA_PATTERN.matcher(mcpi_comarca);
+                    if (matcher.matches()){
+                        mcpis.add(matcher.group(1));
+                        comarques.add(matcher.group(2));
+                    }
                 }
             }
-            if (this.strOrNull(record, "agregat") != null){
-                loc.setAgregat(new MancomunitatType().get(this.strOrNull(record, "agregat")));
+
+            for (int i = 0; i < mcpis.size(); i++){
+                List<String> comarcaAsList = new ArrayList<>();
+                comarcaAsList.add(comarques.get(i));
+                loc.getTerritori().add(getTerritoriResource(mcpis.get(i), comarcaAsList));
             }
-            if (this.strOrNull(record, "cod_sstt") != null){
-                loc.setServeiTerritorial(ssts.get(this.strOrNull(record, "cod_sstt")));
+
+            if (this.literalOrNull(record, "agregat") != null){
+                loc.setAgregat(this.literalOrNull(record, "agregat"));
             }
-            if (this.strOrNull(record, "utm_x") != null){
+            if (this.literalOrNull(record, "cod_sstt") != null){
+                String cod_sstt = StringEscapeUtils.unescapeXml(this.strOrNull(record, "cod_sstt"));
+                loc.setServeiTerritorial(getEnumValue(ServeiTerritorialType.class, cod_sstt));
+            }
+            if (this.literalOrNull(record, "utm_x") != null){
                 loc.setX(Float.valueOf(this.strOrNull(record, "utm_x").replace(",", ".")));
             }
-            if (this.strOrNull(record, "utm_y") != null){
+            if (this.literalOrNull(record, "utm_y") != null){
                 loc.setY(Float.valueOf(this.strOrNull(record, "utm_y").replace(",", ".")));
             }
             loc.setIdentificador(getIdentificador());
@@ -373,6 +465,7 @@ public class GENECSV2GENERDF extends RDF {
             return new ArrayList<>();
         }
         List<Tipologia> tipologies = new ArrayList<>();
+
         String[] tipus_us = this.getMultivaluedField(record, "cod_arq_utilitzacio");
         if (tipus_us != null) {
             for (String tip_us : tipus_us) {
@@ -380,7 +473,8 @@ public class GENECSV2GENERDF extends RDF {
                 tip.setAbout(this.getIdentifier("Tipologia"));
                 tip.setIdentificador(getIdentificador());
                 {
-                    tip.setTipologia(new UtilitzacioType().get(Integer.valueOf(tip_us)));
+                    Tipologia tipo = new Tipologia();
+                    tipo.setTipologiaArquitectonic(getEnumValue(TipologiaArquitectonicType.class, tip_us));
                 }
                 tipologies.add(tip);
             }
@@ -400,43 +494,100 @@ public class GENECSV2GENERDF extends RDF {
                 us.setAbout(this.getIdentifier("Us"));
                 us.setIdentificador(getIdentificador());
                 {
-                    us.setOriginalActual(tip_us);
+                    UtilitzacioType tipusUtilitzacio = getEnumValue(UtilitzacioType.class, tip_us);
+                    if (tipusUtilitzacio != null){
+                        us.setTipusUtilitzacio(tipusUtilitzacio);
+                        usos.add(us);
+                        continue;
+                    }
+                    OriginalActualType tipusOriginalActual = getEnumValue(OriginalActualType.class, tip_us);
+                    if (tipusOriginalActual != null){
+                        us.setTipusOriginalActual(tipusOriginalActual);
+                        usos.add(us);
+                        continue;
+                    }
+                    us.setOriginalActualText(stringToLiteralType(tip_us));
+                    usos.add(us);
                 }
-                usos.add(us);
             }
         }
         return usos;
     }
 
     private Datacio getArquitecturaDatacio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"cod_epoca_inicial", "cod_epoca_final", "data_inicial", "data_fi"})){
-            return null;
-        }
-        Datacio dat = new Datacio();
-        dat.setAbout(this.getIdentifier("Datacio"));
-        dat.setIdentificador(getIdentificador());
-        {
-            Cronologia inici = arquiCronologiaType.get(this.strOrNull(record, "cod_epoca_inicial"));
-            Cronologia fi = arquiCronologiaType.get(this.strOrNull(record, "cod_epoca_final"));
-            if (inici != null){
-                dat.setCronologiaInicial(inici.getDescripcio());
-                if (inici.getAny_inici() != null){
-                    dat.setAnyInici(inici.getAny_inici());
-                }
-            } else if (this.strOrNull(record, "data_inicial") != null){
-                dat.setAnyInici(Integer.valueOf(this.strOrNull(record, "data_inicial")));
+            if (!hasSomeValue(record, new String[] {"Epoques", "data_inicial", "data_fi"})){
+                return null;
             }
-            if (fi != null){
-                dat.setCronologiaFinal(fi.getDescripcio());
-                if (fi.getAny_fi() != null){
-                    dat.setAnyFi(fi.getAny_fi());
+            Datacio dat = new Datacio();
+            dat.setAbout(this.getIdentifier("Datacio"));
+            dat.setIdentificador(getIdentificador());
+            {
+                String[] anys_inici = this.getMultivaluedField(record, "data_inicial");
+                String[] anys_fi = this.getMultivaluedField(record, "data_fi");
+                String[] cronologies = this.getMultivaluedField(record, "Epoques");
+
+                if (anys_inici != null){
+                    for (String any_inici : anys_inici){
+                        dat.getAnyInici().add(Integer.valueOf(any_inici));
+                    }
                 }
-            } else if (this.strOrNull(record, "data_fi") != null){
-                dat.setAnyFi(Integer.valueOf(this.strOrNull(record, "data_fi")));
+
+                if (anys_fi != null) {
+                    for (String any_fi : anys_fi) {
+                        dat.getAnyFi().add(Integer.valueOf(any_fi));
+                    }
+                }
+
+
+                if (cronologies != null){
+                    for (String cronologia : cronologies){
+                        String[] cronologies_sep = cronologia.trim().split(Pattern.quote(CRONOLOGIA_SEPARATOR));
+                        String cronologia_inicial = StringEscapeUtils.unescapeXml(cronologies_sep[0]);
+                        String cronologia_final = "";
+
+                        Object cronologiaInicial = null;
+                        Object cronologiaFinal = null;
+                        Object cronologiaTemporalFinal = null;
+
+                        if (cronologies_sep.length == 2){
+                            cronologia_final = StringEscapeUtils.unescapeXml(cronologies_sep[1]);
+                        }
+                        try {
+                            cronologiaInicial = getEnumValue(CronologiaArquitectonicType.class, cronologia_inicial);
+                            cronologiaFinal = cronologiaInicial;
+                        } catch (Exception ignored){
+                            try {
+                                cronologiaInicial = getEnumValue(EstilEpocaType.class, cronologia_inicial);
+                                cronologiaFinal = cronologiaInicial;
+                            } catch (Exception ignored2){
+                            }
+                        }
+                        if (cronologiaInicial == null){
+                            continue;
+                        }
+
+                        try {
+                            cronologiaTemporalFinal = cronologiaFinal;
+                            cronologiaFinal = getEnumValue(CronologiaArquitectonicType.class, cronologia_final);
+                        } catch (Exception ignored){
+                            try {
+                                cronologiaFinal = getEnumValue(EstilEpocaType.class, cronologia_final);
+                            } catch (Exception ignored2){
+                                cronologiaFinal = cronologiaTemporalFinal;
+                            }
+                        }
+
+                        if (cronologiaFinal == null){
+                            cronologiaFinal = cronologiaInicial;
+                        }
+
+                        dat.getCronologiaInicial().add(cronologiaInicial);
+                        dat.getCronologiaFinal().add(cronologiaFinal);
+                    }
+                }
             }
+            return dat;
         }
-        return dat;
-    }
 
     private List<Estil> getArquitecturaEstils(CSVRecord record) {
         if (!hasSomeValue(record, new String[] {"cod_estil"})){
@@ -450,7 +601,15 @@ public class GENECSV2GENERDF extends RDF {
                 estilDesc.setIdentificador(getIdentificador());
                 estilDesc.setAbout(this.getIdentifier("Estil"));
                 {
-                    estilDesc.setTipusEstil(new EstilType().get(Integer.valueOf(estil)));
+                    try {
+                        estilDesc.setTipusEstilArquitectonic(getEnumValue(EstilArquitectonicType.class, estil));
+                    } catch (Exception ignored){
+                        try {
+                            estilDesc.setTipusEstilEpoca(getEnumValue(EstilEpocaType.class, estil));
+                        } catch (Exception ignored2){
+                            estilDesc.setTipusEstilText(stringToLiteralType(estil));
+                        }
+                    }
                 }
                 estilsDesc.add(estilDesc);
             }
@@ -469,16 +628,16 @@ public class GENECSV2GENERDF extends RDF {
             String[] cognoms = this.getMultivaluedField(record, "cognoms");
             if (cognoms != null){
                 for (String cognom : cognoms){
-                    autDesc.getCognoms().add(cognom);
+                    autDesc.getCognoms().add(this.stringToLiteralType(cognom));
                 }
             }
-            autDesc.setNoms(this.strOrNull(record, "nom"));
-            autDesc.setProfessio(this.strOrNull(record, "funcio"));
-            if (this.strOrNull(record, "any_inici") != null){
+            autDesc.setNoms(this.literalOrNull(record, "nom"));
+            autDesc.setProfessio(this.literalOrNull(record, "funcio"));
+            if (this.literalOrNull(record, "any_inici") != null){
                 autDesc.setAnyInici(Integer.valueOf(this.strOrNull(record, "any_inici")));
             }
 
-            if (this.strOrNull(record, "any_fi") != null){
+            if (this.literalOrNull(record, "any_fi") != null){
                 autDesc.setAnyFi(Integer.valueOf(this.strOrNull(record, "any_fi")));
             }
 
@@ -487,13 +646,13 @@ public class GENECSV2GENERDF extends RDF {
     }
 
     private Descripcio getArquitecturaDescripcio(CSVRecord record){
-        if (!hasSomeValue(record, new String[] {"descripció"})){
+        if (!hasSomeValue(record, new String[] {"descripcio"})){
             return null;
         }
         Descripcio desc = new Descripcio();
         desc.setAbout(this.getIdentifier("Descripcio"));
         desc.setIdentificador(getIdentificador());
-        desc.setDescDescripcio(this.strOrNull(record, "descripció"));
+        desc.setDescDescripcio(this.literalOrNull(record, "descripcio"));
         return desc;
     }
 
@@ -505,29 +664,32 @@ public class GENECSV2GENERDF extends RDF {
         noticia.setAbout(this.getIdentifier("NoticiesHistoriques"));
         noticia.setIdentificador(getIdentificador());
         {
-            noticia.setComentariNoticiaHistorica(this.strOrNull(record, "noticies_històriques"));
+            noticia.setComentariNoticiaHistorica(this.literalOrNull(record, "noticies_històriques"));
         }
         return noticia;
     }
 
     private Conservacio getArquitecturaConservacio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"cod_estat_global"})){
+        if (!hasSomeValue(record, new String[] {"conservacio"})){
             return null;
         }
         Conservacio con = new Conservacio();
         con.setAbout(this.getIdentifier("Conservacio"));
         con.setIdentificador(getIdentificador());
         {
-            String conservacio = this.strOrNull(record, "cod_estat_global");
-            if (conservacio != null){
-                con.setConservacioEstat(arquiConservacioType.get(Integer.valueOf(conservacio)));
+            String conservacio = this.strOrNull(record, "conservacio");
+            if (conservacio != null) {
+                con.setConservacioEstatArquitectonic(getEnumValue(ConservacioEstatArquitectonicType.class, conservacio));
+                if (con.getConservacioEstatArquitectonic() != null) {
+                    con.setConservacioComentari(this.stringToLiteralType(conservacio));
+                }
             }
         }
         return con;
     }
 
     private Proteccio getArquitecturaProteccio(CSVRecord record) {
-        if (!hasSomeValue(record, new String[] {"classificacio", "entorn", "Numero_bcin", "Numero_bic", "ct_culturabcil"})){
+        if (!hasSomeValue(record, new String[] {"classificacio", "entorn", "Numero_bcin", "Numero_bic", "ct_cultura_bcil", "Proteccions"})){
             return null;
         }
         Proteccio proteccio = new Proteccio();
@@ -537,20 +699,41 @@ public class GENECSV2GENERDF extends RDF {
             String[] classificacions = this.getMultivaluedField(record, "classificacio");
             if (classificacions != null) {
                 for (String classificacio : classificacions) {
-                    proteccio.getClassificacio().add(new org.Custom.Transformations.formats.gene.arquitectura.ProteccioClassificacioType().get(Integer.valueOf(classificacio)));
+                    try {
+                        ClassificacioArquitectonicType classArqui = ClassificacioArquitectonicType.fromValue(classificacio);
+                        proteccio.setClassificacioArquitectonic(classArqui);
+                    } catch (Exception ex){
+
+                    }
                 }
             }
             try {
-                proteccio.setEntornProteccio(Boolean.valueOf(Integer.valueOf(this.strOrNull(record, "entorn")) != 0));
+                proteccio.setEntornProteccio(Integer.valueOf(this.strOrNull(record, "entorn")) != 0);
             } catch (Exception ex) {
 
             }
-
-            proteccio.setBCIN(this.strOrNull(record, "Numero_bcin"));
-            proteccio.setBIC(this.strOrNull(record, "Numero_bic"));
-            proteccio.setPCC(this.strOrNull(record, "ct_cultura_bcil"));
+            proteccio.setBCIN(this.stringToLiteralType(this.getBCIN(this.getMultivaluedField(record, "Proteccions"))));
+            if (this.literalOrNull(record, "Numero_bcin") != null){
+                proteccio.setBCIN(this.literalOrNull(record, "Numero_bcin"));
+            }
+            proteccio.setBIC(this.literalOrNull(record, "Numero_bic"));
+            proteccio.setPCC(this.stringToLiteralType(this.getBCIL(this.getMultivaluedField(record, "Proteccions"))));
+            if (this.literalOrNull(record, "ct_cultura_bcil") != null){
+                proteccio.setPCC(this.literalOrNull(record, "ct_cultura_bcil"));
+            }
         }
         return proteccio;
+    }
+
+    private String getBCIL(String[] proteccions) {
+        if (proteccions == null) return null;
+        for (String proteccio : proteccions){
+            Matcher matcher = BCIL_PATTERN.matcher(proteccio);
+            if (matcher.matches()){
+                return matcher.group(1);
+            }
+        }
+        return null;
     }
 
     private Propietari getArquitecturaPropietari(CSVRecord record) {
@@ -563,33 +746,58 @@ public class GENECSV2GENERDF extends RDF {
         {
             String tipusRegim = this.strOrNull(record, "cod_regim");
             if (tipusRegim != null){
-                propietari.setTipusRegim(arquiRegimType.get(tipusRegim));
+                propietari.setTipusRegimArquitectonic(getEnumValue(PropietariArquitectonicType.class, tipusRegim));
             }
         }
         return propietari;
     }
 
+    private ResourceType stringToResourceType(String text){
+        ResourceType resourceType = new ResourceType();
+        resourceType.setResource(text);
+        return resourceType;
+    }
+
     private boolean hasSomeValue(CSVRecord record, String[] values){
         for (String value : values){
-            if (this.strOrNull(record, value) != null){
+            if (this.literalOrNull(record, value) != null){
                 return true;
             }
         }
         return false;
     }
 
-    private Identificador getIdentificador(){
-        Identificador id = new Identificador();
-        id.setResource(identificacio);
-        return id;
+    private ResourceType getIdentificador(){
+        return stringToResourceType(identificacio);
     }
 
-    private XMLGregorianCalendar getDate(String dateStr) throws ParseException, DatatypeConfigurationException {
-        DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-        Date date = format.parse(dateStr);
-        GregorianCalendar cal = new GregorianCalendar();
-        cal.setTime(date);
+    private XMLGregorianCalendar getDate(String dateStr) throws DatatypeConfigurationException {
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/yyyy[ H:mm]");
+        ZoneId zoneId = ZoneId.of("Europe/Madrid");
+        GregorianCalendar cal;
+        try {
+            LocalDateTime formatDateTime = LocalDateTime.parse(dateStr, format);
+            cal = GregorianCalendar.from(formatDateTime.atZone(zoneId));
+        } catch (Exception ex){
+            LocalDate formatDate = LocalDate.parse(dateStr, format);
+            cal = GregorianCalendar.from(formatDate.atStartOfDay(zoneId));
+        }
         return DatatypeFactory.newInstance().newXMLGregorianCalendar(cal);
+    }
+
+    private LiteralType stringToLiteralType(String text){
+        if (text == null) return null;
+        LiteralType literalType = new LiteralType();
+        literalType.setValue(text);
+        return literalType;
+    }
+
+    private LiteralType literalOrNull(CSVRecord record, String field) {
+        String str = this.strOrNull(record, field);
+        if (str != null){
+            return stringToLiteralType(str);
+        }
+        return null;
     }
 
     private String strOrNull(CSVRecord record, String field) {
@@ -602,22 +810,69 @@ public class GENECSV2GENERDF extends RDF {
     private String[] getMultivaluedField(CSVRecord record, String field){
         String fieldValue = strOrNull(record, field);
         if (fieldValue != null){
-            return fieldValue.split(Pattern.quote(SEPARATOR));
+            return fieldValue.trim().split(Pattern.quote(SEPARATOR));
         }
         return null;
     }
 
-    private String getTerritoriResource(String comarca, String municipi){
-        String key = IriToUri.iriToUri(String.format("Territori:%s:%s", StringUtils.deleteWhitespace(municipi), StringUtils.deleteWhitespace(comarca))).toString();
+    private ResourceType getTerritoriResource(String municipi, List<String> comarques){
+        String municipi_raw = StringEscapeUtils.unescapeXml(municipi);
+        String comarquesText = "";
+        if (comarques != null){
+            comarquesText = ":" + StringUtils.deleteWhitespace(String.join(":", comarques));
+        }
+        String key = IriToUri.iriToUri(String.format("Territori:%s%s", StringUtils.deleteWhitespace(municipi), comarquesText)).toString();
         if (territoris.containsKey(key)){
-            return territoris.get(key).getAbout();
+            return stringToResourceType(territoris.get(key).getAbout());
         }
         Territori territori = new Territori();
-        territori.setComarca(comarca);
-        territori.setMunicipi(municipi);
-        territori.setAbout(key);
-        this.getTerritori().add(territori);
-        this.territoris.put(key, territori);
-        return territori.getAbout();
+        if (comarques != null) {
+            for (String comarca : comarques) {
+                String comarca_raw = StringEscapeUtils.unescapeXml(comarca);
+                territori.getComarca().add(getEnumValue(ComarcaType.class, comarca_raw));
+            }
+        }
+        territori.setMunicipi(getEnumValue(MunicipiType.class, municipi_raw));
+        if (!territori.getComarca().isEmpty() && territori.getMunicipi() != null){
+            territori.setAbout(key);
+            this.getTerritoriType().add(territori);
+            this.territoris.put(key, territori);
+            return stringToResourceType(territori.getAbout());
+        }
+        return null;
+    }
+
+    public static String getValueOfEnum(Enum<?> e){
+        String value = null;
+        try {
+            Method method = e.getClass().getMethod("value");
+            value = (String) method.invoke(e);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
+            e1.printStackTrace();
+        }
+        return value;
+    }
+
+    public static String[] getNames(Class<? extends Enum<?>> e) {
+        return Arrays.stream(e.getEnumConstants()).map(Enum::name).toArray(String[]::new);
+    }
+
+    public static String[] getValues(Class<? extends Enum<?>> e) {
+        return Arrays.stream(e.getEnumConstants()).map(GENECSV2GENERDF::getValueOfEnum).toArray(String[]::new);
+    }
+
+    private boolean normalizedEquals(String str1, String str2) {
+        return StringUtils.stripAccents(str1.toLowerCase()).equals(StringUtils.stripAccents(str2.toLowerCase()));
+    }
+
+    private <T extends Enum<T>> T getEnumValue (Class<T> e, String value){
+        String[] values = getValues(e);
+        String[] names = getNames(e);
+        for (int i = 0; i < values.length; i++){
+            if (normalizedEquals(values[i], value)){
+                return Enum.valueOf(e, names[i]);
+            }
+        }
+        return null;
     }
 }

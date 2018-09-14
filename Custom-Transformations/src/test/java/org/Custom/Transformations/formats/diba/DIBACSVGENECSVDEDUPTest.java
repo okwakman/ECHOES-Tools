@@ -15,14 +15,14 @@ public class DIBACSVGENECSVDEDUPTest {
     @Before
     public void setUp() throws IOException {
         String csvDiba = getClass().getClassLoader().getResource("diba/DIBA.csv").getPath();
-        String csvGeneArque = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arqueologics_29-06-2017_fix.csv").getPath();
-        String csvGeneArqui = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arquitectonic_29-06-2017_fix.csv").getPath();
+        String csvGeneArque = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arqueologics_29-06-2017.csv").getPath();
+        String csvGeneArqui = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arquitectonic_29-06-2017.csv").getPath();
         geneArqueDedup = new DIBACSVGENECSVDedupInfo(csvDiba, csvGeneArque, false);
         geneArquiDedup = new DIBACSVGENECSVDedupInfo(csvDiba, csvGeneArqui, true);
     }
 
     @Test
-    public void test() throws IOException {
+    public void test() {
         HashMap<String, List<String>> arqueDedup = geneArqueDedup.getIdentifierDedup();
         HashMap<String, List<String>> arquiDedup = geneArquiDedup.getIdentifierDedup();
         System.out.println("Arquitectura DEDUP Num.: " + arquiDedup.values().size());

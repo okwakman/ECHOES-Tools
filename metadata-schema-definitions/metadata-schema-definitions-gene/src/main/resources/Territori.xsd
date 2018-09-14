@@ -10,32 +10,20 @@
     <xs:include schemaLocation="Diccionaris/Municipi.xsd"/>
     <xs:include schemaLocation="Diccionaris/Comarca.xsd"/>
 
-    <xs:annotation>
-        <xs:documentation>
-            GENE First Implementation Schema: Contextual elements (vocabulary terms)
-        </xs:documentation>
-    </xs:annotation>
-
-    <xs:element name="TerritoriType">
-        <xs:complexType>
-            <xs:annotation>
-                <xs:documentation>
-                    Conté 1 municipi i >= 1 Comarca.
-                </xs:documentation>
-            </xs:annotation>
-            <xs:complexContent>
-                <xs:extension base="gene:SequenceTerritoriType">
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
+    <xs:element name="TerritoriType" type="gene:Territori">
+        <xs:annotation>
+            <xs:documentation>
+                Conté 1 municipi i >= 1 Comarca.
+            </xs:documentation>
+        </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="SequenceTerritoriType">
+    <xs:complexType name="Territori">
         <xs:complexContent>
             <xs:extension base="rdf:AboutType">
                 <xs:sequence>
                     <xs:element name="municipi" type="gene:MunicipiType"/>
-                    <xs:element name="comarca" type="gene:ComarcaType" maxOccurs="unbounded" />
+                    <xs:element name="comarca" type="gene:ComarcaType" maxOccurs="unbounded"/>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>

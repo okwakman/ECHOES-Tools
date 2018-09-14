@@ -10,39 +10,21 @@
     <xs:include schemaLocation="Diccionaris/TipologiaArqueologic.xsd"/>
     <xs:include schemaLocation="Diccionaris/TipologiaArquitectonic.xsd"/>
 
-    <xs:annotation>
-        <xs:documentation>
-            GENE First Implementation Schema: Contextual elements (vocabulary terms)
-        </xs:documentation>
-    </xs:annotation>
-
-    <xs:element name="TipologiaType">
-        <xs:complexType>
-            <xs:annotation>
-                <xs:documentation>
-                    Tipus de bé.
-                </xs:documentation>
-            </xs:annotation>
-            <xs:complexContent>
-                <xs:extension base="gene:SequenceTipologiaType">
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
+    <xs:element name="TipologiaType" type="gene:Tipologia">
+        <xs:annotation>
+            <xs:documentation>
+                Dades de la tipologia del bé.
+            </xs:documentation>
+        </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="SequenceTipologiaType">
+    <xs:complexType name="Tipologia">
         <xs:complexContent>
             <xs:extension base="rdf:IdentificadorType">
-                <xs:sequence>
-                    <xs:element name="tipologia" minOccurs="1">
-                        <xs:complexType>
-                            <xs:choice>
-                                <xs:element name="tipologiaArqueologic" type="gene:TipologiaArqueologicType"/>
-                                <xs:element name="tipologiaArquitectonic" type="gene:TipologiaArquitectonicType"/>
-                            </xs:choice>
-                        </xs:complexType>
-                    </xs:element>
-                </xs:sequence>
+                <xs:choice>
+                    <xs:element name="tipologiaArqueologic" type="gene:TipologiaArqueologicType"/>
+                    <xs:element name="tipologiaArquitectonic" type="gene:TipologiaArquitectonicType"/>
+                </xs:choice>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

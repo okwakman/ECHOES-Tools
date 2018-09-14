@@ -7,46 +7,30 @@
         elementFormDefault="qualified">
 
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
-    <xs:include schemaLocation="Diccionaris/ClassificacioArqueologic.xsd" />
-    <xs:include schemaLocation="Diccionaris/ClassificacioArquitectonic.xsd" />
-    <xs:include schemaLocation="Diccionaris/Categoria.xsd" />
-    <xs:include schemaLocation="Diccionaris/AmbitProteccio.xsd" />
+    <xs:include schemaLocation="Diccionaris/ClassificacioArqueologic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/ClassificacioArquitectonic.xsd"/>
+    <xs:include schemaLocation="Diccionaris/Categoria.xsd"/>
+    <xs:include schemaLocation="Diccionaris/AmbitProteccio.xsd"/>
 
-    <xs:annotation>
-        <xs:documentation>
-            GENE First Implementation Schema: Contextual elements (vocabulary terms)
-        </xs:documentation>
-    </xs:annotation>
-
-    <xs:element name="ProteccioType">
-        <xs:complexType>
-            <xs:annotation>
-                <xs:documentation>
-                    Protecció oficial assignada.
-                </xs:documentation>
-            </xs:annotation>
-            <xs:complexContent>
-                <xs:extension base="gene:SequenceProteccioType">
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
+    <xs:element name="ProteccioType" type="gene:Proteccio">
+        <xs:annotation>
+            <xs:documentation>
+                Dades de protecció del bé.
+            </xs:documentation>
+        </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="SequenceProteccioType">
+    <xs:complexType name="Proteccio">
         <xs:complexContent>
             <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
                     <xs:element minOccurs="0" name="proteccio" type="rdf:LiteralType"/>
-                    <xs:element minOccurs="0" name="ambit" type="gene:AmbitProteccioType" />
-                    <xs:element minOccurs="0" name="categoria" type="gene:CategoriaType" />
-                    <xs:element name="classificacio" minOccurs="0" maxOccurs="unbounded">
-                        <xs:complexType>
-                            <xs:choice>
-                                <xs:element name="classificacioArqueologic" type="gene:ClassificacioArqueologicType"/>
-                                <xs:element name="classificacioArquitectonic" type="gene:ClassificacioArquitectonicType"/>
-                            </xs:choice>
-                        </xs:complexType>
-                    </xs:element>
+                    <xs:element minOccurs="0" name="ambit" type="gene:AmbitProteccioType"/>
+                    <xs:element minOccurs="0" name="categoria" type="gene:CategoriaType"/>
+                    <xs:choice minOccurs="0">
+                        <xs:element name="classificacioArqueologic" type="gene:ClassificacioArqueologicType"/>
+                        <xs:element name="classificacioArquitectonic" type="gene:ClassificacioArquitectonicType"/>
+                    </xs:choice>
                     <!-- TODO: Change to dictionary when available -->
                     <xs:element minOccurs="0" name="entornProteccio" type="xs:boolean"/>
                     <xs:element minOccurs="0" name="BCIN" type="rdf:LiteralType"/>

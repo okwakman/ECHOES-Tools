@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://www.w3.org/2001/XMLSchema"
-        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
         xmlns:xml="http://www.w3.org/XML/1998/namespace"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
         targetNamespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:gene="http://www.gencat.cat/"
         elementFormDefault="qualified">
-    <annotation>
-        <documentation>
-            EDM First Implementation Schema: RDF resources and literals
-        </documentation>
-    </annotation>
+
+    <xs:annotation>
+        <xs:documentation>RDF properties and elements (or derived)</xs:documentation>
+    </xs:annotation>
+
+    <xs:import namespace="http://www.gencat.cat/" schemaLocation="GENE.xsd"/>
 
     <import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="XML.xsd"/>
 
     <complexType name="ResourceType">
-        <attribute ref="rdf:resource" use="required"/>
+        <xs:attribute ref="rdf:resource" use="required"/>
     </complexType>
 
     <complexType name="AboutType">
@@ -22,7 +25,7 @@
 
     <complexType name="PropertyAboutType">
         <sequence>
-            <element name="proveidor" type="rdf:ResourceType"/>
+            <element ref="gene:proveidor"/>
             <element name="subClassOf" type="rdf:ResourceType"/>
         </sequence>
         <attribute ref="rdf:about" use="required"/>
@@ -39,7 +42,7 @@
     <complexType name="LiteralType">
         <simpleContent>
             <extension base="string">
-                <attribute ref="xml:lang" use="optional"/>
+                <attribute ref="xml:lang"/>
             </extension>
         </simpleContent>
     </complexType>
@@ -59,10 +62,32 @@
     <complexType name="ResourceOrLiteralType">
         <simpleContent>
             <extension base="string">
-                <attribute ref="xml:lang" use="optional"/>
-                <attribute ref="rdf:resource" use="optional"/>
+                <attribute ref="xml:lang"/>
+                <attribute ref="rdf:resource"/>
             </extension>
         </simpleContent>
     </complexType>
 
+    <xs:element name="RDF">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:IdentificacioType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:LocalitzacioType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:TerritoriType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:TipologiaType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:UsType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:DatacioType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:EstilType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:AutorType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:DescripcioType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:NoticiaHistoricaType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:ConservacioType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:ProteccioType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:PropietariType"/>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="gene:InformacioFitxaType"/>
+
+                <xs:element maxOccurs="unbounded" ref="gene:PropertyType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
 </schema>

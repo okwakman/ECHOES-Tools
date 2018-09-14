@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <jxb:bindings version="1.0"
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
               xmlns:jxb="http://java.sun.com/xml/ns/jaxb"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xmlns:namespace="http://jaxb2-commons.dev.java.net/namespace-prefix"
@@ -19,5 +20,14 @@ http://jaxb2-commons.dev.java.net/namespace-prefix ">
             <!-- Additional @XmlNs prefix declarations to take effect for this schema/package -->
             <namespace:prefix name="rdf" namespaceURI="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
         </jxb:bindings>
+    </jxb:bindings>
+
+
+    <jxb:bindings schemaLocation="Datacio.xsd" node="/xs:schema/xs:complexType[@name='Datacio']//xs:choice[@id='cronologiaInicial']">
+        <jxb:property name="cronologiaInicial"/>
+    </jxb:bindings>
+
+    <jxb:bindings schemaLocation="Datacio.xsd" node="/xs:schema/xs:complexType[@name='Datacio']//xs:choice[@id='cronologiaFinal']">
+        <jxb:property name="cronologiaFinal"/>
     </jxb:bindings>
 </jxb:bindings>

@@ -9,34 +9,22 @@
     <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="RDF.xsd"/>
     <xs:include schemaLocation="Diccionaris/PatrimoniTipus.xsd"/>
 
-    <xs:annotation>
-        <xs:documentation>
-            GENE First Implementation Schema: Contextual elements (vocabulary terms)
-        </xs:documentation>
-    </xs:annotation>
-
-    <xs:element name="IdentificacioType">
-        <xs:complexType>
-            <xs:annotation>
-                <xs:documentation>
-                    Dades identificatories del be.
-                </xs:documentation>
-            </xs:annotation>
-            <xs:complexContent>
-                <xs:extension base="gene:SequenceIdentificacioType">
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
+    <xs:element name="IdentificacioType" type="gene:Identificacio">
+        <xs:annotation>
+            <xs:documentation>
+                Dades identificatories del be.
+            </xs:documentation>
+        </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="SequenceIdentificacioType">
+    <xs:complexType name="Identificacio">
         <xs:complexContent>
             <xs:extension base="rdf:AboutType">
                 <xs:sequence>
-                    <xs:element name="tipusPatrimoni" type="gene:PatrimoniTipus"/>
-                    <xs:element name="codiIntern" type="rdf:LiteralType"/>
+                    <xs:element name="tipusPatrimoni" type="gene:PatrimoniTipus" minOccurs="0"/>
+                    <xs:element name="codiIntern" type="rdf:LiteralType" minOccurs="0"/>
                     <xs:element name="codiInventari" type="rdf:LiteralType" minOccurs="0"/>
-                    <xs:element name="nom" type="rdf:LiteralType"/>
+                    <xs:element name="nom" type="rdf:LiteralType" minOccurs="0"/>
                     <xs:element name="altresNoms" type="rdf:LiteralType" minOccurs="0"/>
                     <xs:element name="partOf" type="rdf:ResourceType" minOccurs="0"/>
                 </xs:sequence>

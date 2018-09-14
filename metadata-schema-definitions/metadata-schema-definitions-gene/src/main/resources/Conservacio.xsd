@@ -10,38 +10,22 @@
     <xs:include schemaLocation="Diccionaris/ConservacioEstatArqueologic.xsd"/>
     <xs:include schemaLocation="Diccionaris/ConservacioEstatArquitectonic.xsd"/>
 
-    <xs:annotation>
-        <xs:documentation>
-            GENE First Implementation Schema: Contextual elements (vocabulary terms)
-        </xs:documentation>
-    </xs:annotation>
-
-    <xs:element name="ConservacioType">
-        <xs:complexType>
-            <xs:annotation>
-                <xs:documentation>
-                    Estat de conservació del bé.
-                </xs:documentation>
-            </xs:annotation>
-            <xs:complexContent>
-                <xs:extension base="gene:SequenceNoticiaConservacioType">
-                </xs:extension>
-            </xs:complexContent>
-        </xs:complexType>
+    <xs:element name="ConservacioType" type="gene:Conservacio">
+        <xs:annotation>
+            <xs:documentation>
+                Estat de conservació del bé.
+            </xs:documentation>
+        </xs:annotation>
     </xs:element>
 
-    <xs:complexType name="SequenceNoticiaConservacioType">
+    <xs:complexType name="Conservacio">
         <xs:complexContent>
             <xs:extension base="rdf:IdentificadorType">
                 <xs:sequence>
-                    <xs:element name="conservacioEstat" minOccurs="0">
-                        <xs:complexType>
-                            <xs:choice>
-                                <xs:element name="conservacioEstatArqueologic" type="gene:ConservacioEstatArqueologicType"/>
-                                <xs:element name="conservacioEstatArquitectonic" type="gene:ConservacioEstatArquitectonicType"/>
-                            </xs:choice>
-                        </xs:complexType>
-                    </xs:element>
+                    <xs:choice minOccurs="0">
+                        <xs:element name="conservacioEstatArqueologic" type="gene:ConservacioEstatArqueologicType"/>
+                        <xs:element name="conservacioEstatArquitectonic" type="gene:ConservacioEstatArquitectonicType"/>
+                    </xs:choice>
                     <xs:element name="conservacioComentari" type="rdf:LiteralType" minOccurs="0"/>
                 </xs:sequence>
             </xs:extension>
