@@ -3,17 +3,14 @@ package org.Custom.Transformations.formats.gene;
 
 import cat.gencat.*;
 import net.sf.saxon.functions.IriToUri;
+import org.Custom.Transformations.core.Convertible;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
@@ -24,57 +21,21 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GENECSV2GENERDF extends RDF {
+public class GENECSV2GENERDF extends Convertible<GENECSV, RDF> {
     private static final String SEPARATOR = " // ";
     private static final String CRONOLOGIA_SEPARATOR = " - ";
     private static final Pattern MUNICIPI_COMARCA_PATTERN = Pattern.compile("(.*)\\s+\\((.*)\\).*");
     private static final Pattern BCIN_PATTERN = Pattern.compile(".*BCIN \\((.*)\\).*");
     private static final Pattern BCIL_PATTERN = Pattern.compile(".*BCIL \\((.*)\\).*");
-    private String fileName;
+    private List<Territori> territoriTypes;
     private boolean isArchitecture;
     private String identificacio = "";
     private String provider;
     private HashMap<String, Territori> territoris;
 
-    public GENECSV2GENERDF(String provider, String fileName, boolean isArchitecture) {
-        this.provider = provider;
-        this.fileName = fileName;
+    public GENECSV2GENERDF() {
         this.territoris = new HashMap<>();
-        this.isArchitecture = isArchitecture;
-    }
-
-    public void generateRDF() throws IOException {
-        Reader in = new FileReader(this.fileName);
-        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
-        for (CSVRecord record : records) {
-            Identificacio id = getIdentificacio(record);
-            this.getIdentificacioType().add(id);
-            if (isArchitecture) {
-                this.getPropertyType().add(getArquitecturaPropietat(record, id));
-                this.getLocalitzacioType().add(getArquitecturaLocalitzacio(record));
-                this.getTipologiaType().addAll(getArquitecturaTipologies(record));
-                this.getUsType().addAll(getArquitecturaUsos(record));
-                this.getDatacioType().add(getArquitecturaDatacio(record));
-                this.getEstilType().addAll(getArquitecturaEstils(record));
-                this.getAutorType().add(getArquitecturaAutor(record));
-                this.getDescripcioType().add(getArquitecturaDescripcio(record));
-                this.getNoticiaHistoricaType().add(getArquitecturaNoticiaHistorica(record));
-                this.getConservacioType().add(getArquitecturaConservacio(record));
-                this.getProteccioType().add(getArquitecturaProteccio(record));
-                this.getPropietariType().add(getArquitecturaPropietari(record));
-            } else {
-                this.getPropertyType().add(getArqueologiaPropietat(record, id));
-                this.getLocalitzacioType().add(getArqueologiaLocalitzacio(record));
-                this.getTipologiaType().addAll(getArqueologiaTipologies(record));
-                this.getDatacioType().add(getArqueologiaDatacio(record));
-                this.getDescripcioType().add(getArqueologiaDescripcio(record));
-                this.getNoticiaHistoricaType().add(getArqueologiaNoticiaHistorica(record));
-                this.getConservacioType().add(getArqueologiaConservacio(record));
-                this.getProteccioType().add(getArqueologiaProteccio(record));
-                this.getPropietariType().add(getArqueologiaPropietari(record));
-            }
-            this.getInformacioFitxaType().add(getInformacioFitxa(record));
-        }
+        this.territoriTypes = new ArrayList<>();
     }
 
     private Identificacio getIdentificacio(CSVRecord record) {
@@ -170,7 +131,10 @@ public class GENECSV2GENERDF extends RDF {
             for (int i = 0; i < mcpis.size(); i++){
                 List<String> comarcaAsList = new ArrayList<>();
                 comarcaAsList.add(comarques.get(i));
-                loc.getTerritori().add(getTerritoriResource(mcpis.get(i), comarcaAsList));
+                ResourceType t = getTerritoriResource(mcpis.get(i), comarcaAsList);
+                if (t != null){
+                    loc.getTerritori().add(getTerritoriResource(mcpis.get(i), comarcaAsList));
+                }
             }
 
             if (this.literalOrNull(record, "agregat") != null){
@@ -439,7 +403,10 @@ public class GENECSV2GENERDF extends RDF {
             for (int i = 0; i < mcpis.size(); i++){
                 List<String> comarcaAsList = new ArrayList<>();
                 comarcaAsList.add(comarques.get(i));
-                loc.getTerritori().add(getTerritoriResource(mcpis.get(i), comarcaAsList));
+                ResourceType t = getTerritoriResource(mcpis.get(i), comarcaAsList);
+                if (t != null){
+                    loc.getTerritori().add(t);
+                }
             }
 
             if (this.literalOrNull(record, "agregat") != null){
@@ -835,7 +802,7 @@ public class GENECSV2GENERDF extends RDF {
         territori.setMunicipi(getEnumValue(MunicipiType.class, municipi_raw));
         if (!territori.getComarca().isEmpty() && territori.getMunicipi() != null){
             territori.setAbout(key);
-            this.getTerritoriType().add(territori);
+            this.territoriTypes.add(territori);
             this.territoris.put(key, territori);
             return stringToResourceType(territori.getAbout());
         }
@@ -874,5 +841,43 @@ public class GENECSV2GENERDF extends RDF {
             }
         }
         return null;
+    }
+
+    @Override
+    public RDF convert(GENECSV src) {
+        this.provider = this.getParams().getOrDefault("provider", "GENE");
+        this.isArchitecture = Boolean.parseBoolean(this.getParams().getOrDefault("isArchitecture", "true"));
+        RDF generdf = new RDF();
+        for (CSVRecord record : src.getRecords()) {
+            Identificacio id = getIdentificacio(record);
+            generdf.getIdentificacioType().add(id);
+            if (isArchitecture) {
+                generdf.getPropertyType().add(getArquitecturaPropietat(record, id));
+                generdf.getLocalitzacioType().add(getArquitecturaLocalitzacio(record));
+                generdf.getTipologiaType().addAll(getArquitecturaTipologies(record));
+                generdf.getUsType().addAll(getArquitecturaUsos(record));
+                generdf.getDatacioType().add(getArquitecturaDatacio(record));
+                generdf.getEstilType().addAll(getArquitecturaEstils(record));
+                generdf.getAutorType().add(getArquitecturaAutor(record));
+                generdf.getDescripcioType().add(getArquitecturaDescripcio(record));
+                generdf.getNoticiaHistoricaType().add(getArquitecturaNoticiaHistorica(record));
+                generdf.getConservacioType().add(getArquitecturaConservacio(record));
+                generdf.getProteccioType().add(getArquitecturaProteccio(record));
+                generdf.getPropietariType().add(getArquitecturaPropietari(record));
+            } else {
+                generdf.getPropertyType().add(getArqueologiaPropietat(record, id));
+                generdf.getLocalitzacioType().add(getArqueologiaLocalitzacio(record));
+                generdf.getTipologiaType().addAll(getArqueologiaTipologies(record));
+                generdf.getDatacioType().add(getArqueologiaDatacio(record));
+                generdf.getDescripcioType().add(getArqueologiaDescripcio(record));
+                generdf.getNoticiaHistoricaType().add(getArqueologiaNoticiaHistorica(record));
+                generdf.getConservacioType().add(getArqueologiaConservacio(record));
+                generdf.getProteccioType().add(getArqueologiaProteccio(record));
+                generdf.getPropietariType().add(getArqueologiaPropietari(record));
+            }
+            generdf.getTerritoriType().addAll(this.territoriTypes);
+            generdf.getInformacioFitxaType().add(getInformacioFitxa(record));
+        }
+        return generdf;
     }
 }

@@ -1,6 +1,8 @@
 package org.Custom.Transformations.formats.diba2gene;
 
+import org.Custom.Transformations.formats.diba.DIBACSV;
 import org.Custom.Transformations.formats.diba.DIBACSV2GENECSV;
+import org.Custom.Transformations.formats.gene.GENECSV;
 import org.Custom.Transformations.formats.gene.GENECSV2GENERDF;
 import org.csuc.deserialize.JaxbUnmarshal;
 import org.csuc.serialize.JaxbMarshal;
@@ -13,27 +15,37 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class DIBACSV2GENECSV2GENERDFTest {
-    private DIBACSV2GENECSV rdfConverter;
+    private DIBACSV2GENECSV diba2gene_converter;
+    private GENECSV2GENERDF gene2rdf_converter;
+    private DIBACSV dibacsv;
+    private GENECSV genecsv;
 
     @Before
     public void setUp() throws Exception {
-        rdfConverter = new DIBACSV2GENECSV();
+        diba2gene_converter = new DIBACSV2GENECSV();
+        gene2rdf_converter = new GENECSV2GENERDF();
     }
 
     @Test
     public void testArquitectura() throws IOException, JAXBException {
         // DIBACSV -> GENECSV
-        String csvPathArqui = getClass().getClassLoader().getResource("diba/Arquitectura.csv").getPath();
         File tmpGene = Files.createTempFile("diba", ".csv").toFile();
-        rdfConverter.convert(csvPathArqui, tmpGene.getAbsolutePath());
+        dibacsv = new DIBACSV();
+        try {
+            dibacsv.load(Paths.get(getClass().getClassLoader().getResource("diba/Arquitectura.csv").toURI()));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        genecsv = diba2gene_converter.convert(dibacsv);
         // GENECSV -> GENERDF
-        GENECSV2GENERDF csvConverter = new GENECSV2GENERDF("DIBA", tmpGene.getAbsolutePath(), true);
-        csvConverter.generateRDF();
         File tmp = Files.createTempFile("diba_gene_rdf", ".xml").toFile();
-        JaxbMarshal jaxb = new JaxbMarshal(csvConverter, RDF.class);
+        RDF generdf = gene2rdf_converter.convert(genecsv);
+        JaxbMarshal jaxb = new JaxbMarshal(gene2rdf_converter.convert(genecsv), RDF.class);
         FileOutputStream fileOutputStream = new FileOutputStream(tmp);
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);
@@ -50,14 +62,17 @@ public class DIBACSV2GENECSV2GENERDFTest {
     @Test
     public void testArqueologia() throws IOException, JAXBException {
         // DIBACSV -> GENECSV
-        String csvPathArqui = getClass().getClassLoader().getResource("diba/Arqueologia.csv").getPath();
         File tmpGene = Files.createTempFile("diba", ".csv").toFile();
-        rdfConverter.convert(csvPathArqui, tmpGene.getAbsolutePath());
+        dibacsv = new DIBACSV();
+        try {
+            dibacsv.load(Paths.get(getClass().getClassLoader().getResource("diba/Arqueologia.csv").toURI()));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        genecsv = diba2gene_converter.convert(dibacsv);
         // GENECSV -> GENERDF
-        GENECSV2GENERDF csvConverter = new GENECSV2GENERDF("DIBA", tmpGene.getAbsolutePath(), false);
-        csvConverter.generateRDF();
         File tmp = Files.createTempFile("diba_gene_rdf", ".xml").toFile();
-        JaxbMarshal jaxb = new JaxbMarshal(csvConverter, RDF.class);
+        JaxbMarshal jaxb = new JaxbMarshal(gene2rdf_converter.convert(genecsv), RDF.class);
         FileOutputStream fileOutputStream = new FileOutputStream(tmp);
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);

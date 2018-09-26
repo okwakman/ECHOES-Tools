@@ -1,27 +1,22 @@
 package org.Custom.Transformations.formats.diba;
 
 import cat.gencat.*;
+import org.Custom.Transformations.core.Convertible;
+import org.Custom.Transformations.formats.gene.GENECSV;
 import org.Custom.Transformations.formats.gene.common.Comarca;
 import org.Custom.Transformations.formats.gene.common.Municipi;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DIBACSV2GENECSV {
+public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
     private Map<String, Municipi> municipis;
     private Map<Integer, Comarca> comarques;
 
@@ -30,20 +25,6 @@ public class DIBACSV2GENECSV {
     private HashMap<String, String> archeologyStaticColumnsMapping;
     private HashMap<String, String> architectureStaticColumnsMapping;
     private HashMap<String, String> architectureColumnsMapping;
-    private String[] fields = {
-            // Comuns
-            "codi", "tipus_registre", "nom_actual", "agregat", "Municipi_Comarca", "Proteccions", "cod_sstt", "data_fi", "descripcio", "nom", "usr_alta", "d_alta", "d_mod",
-            // Arqueologia
-            "num_jaciment", "nom_altres",
-            "coor_utm_long", "coor_utm_lat", "context_desc", "tip_jac", "Cronologies", "data_inici", "tip_noticia", "data",
-            "notes", "tip_conservació", "consDescripció", "tip_prot_legal", "class_prot_legal",
-            "tip-regim",
-            // Arquitectura
-            "cod_arq", "altres_noms", "adreça",
-            "utm_x", "utm_y", "cod_arq_utilitzacio", "original_actual", "Epoques", "data_inicial", "cod_estil", "cognoms", "funcio", "any_inici",
-            "any_fi", "notícies_històriques", "cod_estat_global", "classificacio", "entorn",
-            "cod_regim"
-    };
 
     public DIBACSV2GENECSV() {
         municipis = new org.Custom.Transformations.formats.gene.common.MunicipiType();
@@ -53,29 +34,6 @@ public class DIBACSV2GENECSV {
         fillArcheologyColumnsMapping();
         fillArchitectureStaticColumnsMapping();
         fillArchitectureColumnsMapping();
-    }
-
-    private Iterable<CSVRecord> getRecords(String fileNameIn) throws IOException {
-        Reader in = new FileReader(fileNameIn);
-        return CSVFormat.DEFAULT.withHeader().parse(in);
-    }
-
-    private CSVPrinter getCSVPrinter(String fileNameOut) throws IOException {
-        BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileNameOut));
-        return new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(fields));
-    }
-
-    public void convert(String fileNameIn, String fileNameOut) throws IOException {
-        Iterable<CSVRecord> records = getRecords(fileNameIn);
-        CSVPrinter csvPrinter = getCSVPrinter(fileNameOut);
-        for (CSVRecord record : records) {
-            if (isArchitecture(record)) {
-                csvPrinter.printRecord(processArchitectureColumns(record));
-            } else {
-                csvPrinter.printRecord(processArcheologyColumns(record));
-            }
-        }
-        csvPrinter.flush();
     }
 
     private static String getCronologiaValue(Object cronologia) {
@@ -230,7 +188,7 @@ public class DIBACSV2GENECSV {
     private Iterable<String> processArchitectureColumns(CSVRecord csvRecord) {
         HashMap<String, String> calcColumns = getCalculatedArchitectureColumns(csvRecord);
         List<String> record = new ArrayList<>();
-        for (String field : fields) {
+        for (String field : GENECSV.fields) {
             String recordToAdd = "";
             if (generalColumnsMapping.containsKey(field)) {
                 recordToAdd = csvRecord.get(generalColumnsMapping.get(field));
@@ -271,7 +229,7 @@ public class DIBACSV2GENECSV {
     private Iterable<String> processArcheologyColumns(CSVRecord csvRecord) {
         HashMap<String, String> calcColumns = getCalculatedArcheologyColumns(csvRecord);
         List<String> record = new ArrayList<>();
-        for (String field : fields) {
+        for (String field : GENECSV.fields) {
             String recordToAdd = "";
             if (generalColumnsMapping.containsKey(field)) {
                 recordToAdd = csvRecord.get(generalColumnsMapping.get(field));
@@ -490,5 +448,18 @@ public class DIBACSV2GENECSV {
                 return "6";
         }
         return null;
+    }
+
+    @Override
+    public GENECSV convert(DIBACSV src) {
+        GENECSV genecsv = new GENECSV();
+        src.getRecords().forEach(r -> {
+            if (isArchitecture(r)){
+                genecsv.addRecord(processArchitectureColumns(r));
+            } else {
+                genecsv.addRecord(processArcheologyColumns(r));
+            }
+        } );
+        return genecsv;
     }
 }

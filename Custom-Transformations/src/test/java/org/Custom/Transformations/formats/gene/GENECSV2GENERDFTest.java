@@ -11,25 +11,29 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class GENECSV2GENERDFTest {
-    GENECSV2GENERDF gene_arqui_real;
-    GENECSV2GENERDF gene_arque_real;
+    GENECSV2GENERDF gene_arqui_converter;
+    GENECSV2GENERDF gene_arque_converter;
+    GENECSV genecsv_arqui;
+    GENECSV genecsv_arque;
 
     @Before
     public void setUp() throws Exception {
-        String csvPathArquiReal = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arquitectonic_29-06-2017.csv").getPath();
-        gene_arqui_real = new GENECSV2GENERDF("GENE", csvPathArquiReal, true);
-        gene_arqui_real.generateRDF();
-        String csvPathArqueReal = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arqueologics_29-06-2017.csv").getPath();
-        gene_arque_real = new GENECSV2GENERDF("GENE", csvPathArqueReal, false);
-        gene_arque_real.generateRDF();
+        genecsv_arqui = new GENECSV();
+        genecsv_arqui.load(Paths.get(getClass().getClassLoader().getResource("gene/Extraccio_bens_Arquitectonic_29-06-2017.csv").toURI()));
+        genecsv_arque = new GENECSV();
+        genecsv_arque.load(Paths.get(getClass().getClassLoader().getResource("gene/Extraccio_bens_Arqueologics_29-06-2017.csv").toURI()));
     }
 
     @Test
     public void testArquitectura() throws IOException, JAXBException {
         File tmp = Files.createTempFile("gene_rdf", ".xml").toFile();
-        JaxbMarshal jaxb = new JaxbMarshal(gene_arqui_real, RDF.class);
+        gene_arqui_converter = new GENECSV2GENERDF();
+        gene_arqui_converter.getParams().put("isArchitecture", "true");
+        RDF gene_arqui_rdf = gene_arqui_converter.convert(genecsv_arqui);
+        JaxbMarshal jaxb = new JaxbMarshal(gene_arqui_rdf, RDF.class);
         FileOutputStream fileOutputStream = new FileOutputStream(tmp);
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);
@@ -37,7 +41,7 @@ public class GENECSV2GENERDFTest {
         fis = new FileInputStream(tmp);
         int oneByte;
         while ((oneByte = fis.read()) != -1) {
-            System.out.write(oneByte);
+            //System.out.write(oneByte);
         }
         System.out.flush();
         System.out.println();
@@ -46,7 +50,9 @@ public class GENECSV2GENERDFTest {
     @Test
     public void testArqueologia() throws IOException, JAXBException {
         File tmp = Files.createTempFile("gene_rdf", ".xml").toFile();
-        JaxbMarshal jaxb = new JaxbMarshal(gene_arque_real, RDF.class);
+        gene_arque_converter = new GENECSV2GENERDF();
+        gene_arque_converter.getParams().put("isArchitecture", "false");
+        JaxbMarshal jaxb = new JaxbMarshal(gene_arque_converter.convert(genecsv_arque), RDF.class);
         FileOutputStream fileOutputStream = new FileOutputStream(tmp);
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);
@@ -54,7 +60,7 @@ public class GENECSV2GENERDFTest {
         fis = new FileInputStream(tmp);
         int oneByte;
         while ((oneByte = fis.read()) != -1) {
-            System.out.write(oneByte);
+            //System.out.write(oneByte);
         }
         System.out.flush();
         System.out.println();

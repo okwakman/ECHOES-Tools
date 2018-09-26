@@ -1,7 +1,8 @@
 package org.Custom.Transformations.formats.gene;
 
 import cat.gencat.RDF;
-import org.Custom.Transformations.formats.diba.DIBACSVGENECSVDedupInfo;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.csuc.deserialize.JaxbUnmarshal;
 import org.csuc.serialize.JaxbMarshal;
 import org.junit.Before;
@@ -28,13 +29,17 @@ public class GENERDFMergeTest {
     @Test
     public void testMerge() throws IOException, JAXBException {
         String csvDiba = getClass().getClassLoader().getResource("diba/DIBA.csv").getPath();
-        String csvGeneArque = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arqueologics_29-06-2017.csv").getPath();
         String csvGeneArqui = getClass().getClassLoader().getResource("gene/Extraccio_bens_Arquitectonic_29-06-2017.csv").getPath();
-        DIBACSVGENECSVDedupInfo geneArqueDedup = new DIBACSVGENECSVDedupInfo(csvDiba, csvGeneArque, false);
-        DIBACSVGENECSVDedupInfo geneArquiDedup = new DIBACSVGENECSVDedupInfo(csvDiba, csvGeneArqui, true);
         File tmp = Files.createTempFile("gene_rdf_merge", ".xml").toFile();
-        GENERDFMerge merge = new GENERDFMerge(diba, gene, geneArqueDedup.getIdentifierDedup(), geneArquiDedup.getIdentifierDedup());
-        JaxbMarshal jaxb = new JaxbMarshal(merge.merge(), RDF.class);
+
+        GENERDFMerge merge = new GENERDFMerge();
+        merge.getParams().put("csvDibaPath", csvDiba);
+        merge.getParams().put("csvGenePath", csvGeneArqui);
+        Pair<RDF, RDF> dibaGeneRdf = new ImmutablePair<>(diba, gene);
+
+        RDF generdfmerge = merge.convert(dibaGeneRdf);
+
+        JaxbMarshal jaxb = new JaxbMarshal(generdfmerge, RDF.class);
         FileOutputStream fileOutputStream = new FileOutputStream(tmp);
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);

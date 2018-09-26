@@ -1,69 +1,22 @@
 package org.Custom.Transformations.formats.gene;
 
 import cat.gencat.*;
+import org.Custom.Transformations.core.Convertible;
+import org.Custom.Transformations.formats.diba.DIBACSVGENECSVDedupInfo;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GENERDFMerge {
-    private RDF source;
-    private RDF destination;
+public class GENERDFMerge extends Convertible<Pair<RDF, RDF>,RDF> {
     private HashMap<String, List<String>> archeologyDedupInfo;
     private HashMap<String, List<String>> architectureDedupInfo;
 
-    public GENERDFMerge(RDF source, RDF destination, HashMap<String, List<String>> archeologyDedupInfo, HashMap<String, List<String>> architectureDedupInfo) {
-        this.source = source;
-        this.destination = destination;
-        this.archeologyDedupInfo = archeologyDedupInfo;
-        this.architectureDedupInfo = architectureDedupInfo;
-    }
-
-    public RDF merge() {
-        List<Identificacio> idsToAdd = new ArrayList<>();
-        for (Property id : source.getPropertyType()) {
-            HashMap<String, List<String>> dedupInfo;
-            if (id.getTipusPatrimoni() == PatrimoniTipus.ARQUEOLÒGIC) {
-                dedupInfo = this.archeologyDedupInfo;
-            } else {
-                dedupInfo = this.architectureDedupInfo;
-            }
-            if (dedupInfo.containsKey(id.getAbout())) {
-                linkToOriginalID(id, dedupInfo.get(id.getAbout()));
-                Optional<Identificacio> origId = getIdentificacioOfProperty(source, id);
-                origId.ifPresent(idsToAdd::add);
-            }
-            destination.getPropertyType().add(id);
-            if (getLocalitzacio(source, id).isPresent()) {
-                Localitzacio loc = getLocalitzacio(source, id).get();
-                destination.getLocalitzacioType().add(getLocalitzacio(source, id).get());
-                loc.getTerritori().forEach((territori) -> {
-                    Optional<Territori> terr = destination.getTerritoriType().stream().filter(t -> t.getAbout().equals(territori.getResource())).findFirst();
-                    if (!terr.isPresent()) {
-                        destination.getTerritoriType().add(terr.get());
-                    }
-                });
-            }
-            destination.getTipologiaType().addAll(getTipologies(source, id));
-            destination.getUsType().addAll(getUsos(source, id));
-            destination.getDatacioType().addAll(getDatacions(source, id));
-            destination.getEstilType().addAll(getEstils(source, id));
-            destination.getAutorType().addAll(getAutors(source, id));
-            destination.getConservacioType().addAll(getConservacio(source, id));
-            destination.getProteccioType().addAll(getProteccio(source, id));
-            destination.getPropietariType().addAll(getPropietaris(source, id));
-            destination.getNoticiaHistoricaType().addAll(getNoticiesHistoriques(source, id));
-            destination.getInformacioFitxaType().addAll(getInformacioFitxes(source, id));
-            destination.getDescripcioType().addAll(getDescripcio(source, id));
-
-        }
-        destination.getIdentificacioType().addAll(idsToAdd);
-        return destination;
-    }
-
-    private void linkToOriginalID(Property source_id, List<String> dups) {
+    private void linkToOriginalID(Property source_id, List<String> dups, RDF destination) {
         for (String dup : dups) {
             Optional<Property> dest_id_opt = getIdentificacio(destination, dup);
             if (dest_id_opt.isPresent()) {
@@ -129,9 +82,70 @@ public class GENERDFMerge {
         return rdf.getInformacioFitxaType().stream().filter(t -> t.getIdentificador().getResource().equals(id.getAbout())).collect(Collectors.toList());
     }
 
-    private ResourceType stringToResourceType(String text) {
+    /*private ResourceType stringToResourceType(String text) {
         ResourceType resourceType = new ResourceType();
         resourceType.setResource(text);
         return resourceType;
+    }*/
+
+    @Override
+    public RDF convert(Pair<RDF, RDF> src) {
+        boolean isArchitecture = Boolean.parseBoolean(this.getParams().getOrDefault("isArchitecture", "true"));
+        String csvDibaPath = this.getParams().get("csvDibaPath");
+        String csvGenePath = this.getParams().get("csvGenePath");
+        if (isArchitecture){
+            try {
+                architectureDedupInfo = new DIBACSVGENECSVDedupInfo(csvDibaPath, csvGenePath, true).getIdentifierDedup();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                archeologyDedupInfo = new DIBACSVGENECSVDedupInfo(csvDibaPath, csvGenePath, false).getIdentifierDedup();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        RDF source =  src.getKey();
+        RDF destination = src.getValue();
+        List<Identificacio> idsToAdd = new ArrayList<>();
+        for (Property id : source.getPropertyType()) {
+            HashMap<String, List<String>> dedupInfo;
+            if (id.getTipusPatrimoni() == PatrimoniTipus.ARQUEOLÒGIC) {
+                dedupInfo = this.archeologyDedupInfo;
+            } else {
+                dedupInfo = this.architectureDedupInfo;
+            }
+            if (dedupInfo.containsKey(id.getAbout())) {
+                linkToOriginalID(id, dedupInfo.get(id.getAbout()), destination);
+                Optional<Identificacio> origId = getIdentificacioOfProperty(source, id);
+                origId.ifPresent(idsToAdd::add);
+            }
+            destination.getPropertyType().add(id);
+            if (getLocalitzacio(source, id).isPresent()) {
+                Localitzacio loc = getLocalitzacio(source, id).get();
+                destination.getLocalitzacioType().add(getLocalitzacio(source, id).get());
+                loc.getTerritori().forEach((territori) -> {
+                    Optional<Territori> terr = destination.getTerritoriType().stream().filter(t -> t.getAbout().equals(territori.getResource())).findFirst();
+                    if (!terr.isPresent()) {
+                        destination.getTerritoriType().add(terr.get());
+                    }
+                });
+            }
+            destination.getTipologiaType().addAll(getTipologies(source, id));
+            destination.getUsType().addAll(getUsos(source, id));
+            destination.getDatacioType().addAll(getDatacions(source, id));
+            destination.getEstilType().addAll(getEstils(source, id));
+            destination.getAutorType().addAll(getAutors(source, id));
+            destination.getConservacioType().addAll(getConservacio(source, id));
+            destination.getProteccioType().addAll(getProteccio(source, id));
+            destination.getPropietariType().addAll(getPropietaris(source, id));
+            destination.getNoticiaHistoricaType().addAll(getNoticiesHistoriques(source, id));
+            destination.getInformacioFitxaType().addAll(getInformacioFitxes(source, id));
+            destination.getDescripcioType().addAll(getDescripcio(source, id));
+
+        }
+        destination.getIdentificacioType().addAll(idsToAdd);
+        return destination;
     }
 }
