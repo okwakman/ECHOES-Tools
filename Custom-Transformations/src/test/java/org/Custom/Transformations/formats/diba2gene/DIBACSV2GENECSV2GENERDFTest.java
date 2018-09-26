@@ -50,13 +50,8 @@ public class DIBACSV2GENECSV2GENERDFTest {
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);
         JaxbUnmarshal jaxbun = new JaxbUnmarshal(fis, new Class[]{RDF.class});
-        fis = new FileInputStream(tmp);
-        int oneByte;
-        while ((oneByte = fis.read()) != -1) {
-            System.out.write(oneByte);
-        }
-        System.out.flush();
-        System.out.println();
+        tmpGene.deleteOnExit();
+        tmp.deleteOnExit();
     }
 
     @Test
@@ -77,12 +72,7 @@ public class DIBACSV2GENECSV2GENERDFTest {
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);
         JaxbUnmarshal jaxbun = new JaxbUnmarshal(fis, new Class[]{RDF.class});
-        fis = new FileInputStream(tmp);
-        int oneByte;
-        while ((oneByte = fis.read()) != -1) {
-            System.out.write(oneByte);
-        }
-        System.out.flush();
-        System.out.println();
+        tmpGene.deleteOnExit();
+        tmp.deleteOnExit();
     }
 }

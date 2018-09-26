@@ -29,8 +29,13 @@
 			<appender-ref ref="RollingFile" level="info" />
 		</Logger>
 
-		<Logger name="org.EDM.Transformations.formats" level="debug"
+		<Logger name="org.Custom.Transformations.formats" level="debug"
 			additivity="true">
+			<appender-ref ref="RollingFile" level="info" />
+		</Logger>
+
+		<Logger name="org.EDM.Transformations.formats" level="debug"
+				additivity="true">
 			<appender-ref ref="RollingFile" level="info" />
 		</Logger>
 

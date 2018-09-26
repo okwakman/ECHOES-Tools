@@ -29,6 +29,7 @@ public class DIBACSV2GENECSVTest {
         File tmpGene = Files.createTempFile("diba_arqueologia", ".csv").toFile();
         GENECSV genecsv = converter.convert(dibacsvArque);
         genecsv.save(tmpGene.toPath());
+        tmpGene.deleteOnExit();
     }
 
     @Test
@@ -36,6 +37,7 @@ public class DIBACSV2GENECSVTest {
         File tmpGene = Files.createTempFile("diba_arquitectura", ".csv").toFile();
         GENECSV genecsv = converter.convert(dibacsvArqui);
         genecsv.save(tmpGene.toPath());
+        tmpGene.deleteOnExit();
     }
 
 }
