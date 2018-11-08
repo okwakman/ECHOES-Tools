@@ -261,10 +261,6 @@ public class JaxbUnmarshal {
         return validationEvent.isValidating();
     }
 
-	public ValidationHandler getValidationEvent() {
-		return validationEvent;
-	}
-
 	private Schema addSchema(Class[] classType) throws SAXException {
 		List<Source> list = new ArrayList<>();
 

@@ -659,3 +659,4 @@ public class GENERDF2EDM extends RDF implements EDM {
     public void modify(RDF rdf) {
     }
 }
+

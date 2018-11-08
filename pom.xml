@@ -18,6 +18,7 @@
 		<module>recollect-core</module>
 		<module>validation-core</module>
 		<module>edm-transformations</module>
+		<module>custom-transformations</module>
 		<module>binding-core</module>
 		<module>echoes-gui</module>
 	</modules>
@@ -160,6 +161,7 @@
 		<validation.core.version>1.3</validation.core.version>
 
 		<metadata.schema.definitions.version>1.1</metadata.schema.definitions.version>
+		<metadata.schema.definitions.gene.version>1.1</metadata.schema.definitions.gene.version>
 		<metadata.schema.definitions.a2a.version>1.1</metadata.schema.definitions.a2a.version>
 		<metadata.schema.definitions.ead.version>1.1</metadata.schema.definitions.ead.version>
 		<metadata.schema.definitions.memorix.version>1.1</metadata.schema.definitions.memorix.version>
@@ -200,14 +202,14 @@
 			<modules>
 				<module>europeana-parent-pom</module>
 				<module>corelib/corelib-edm-definitions</module>
-				<module>Parser-Core</module>
-				<module>sparql-Loader</module>
+				<module>parser-core</module>
+				<module>sparql-loader</module>
 				<module>metadata-schema-definitions</module>
-				<module>Recollect-Core</module>
-				<module>Validation-Core</module>
-				<module>EDM-Transformations</module>
-				<module>Custom-Transformations</module>
-				<module>Binding-Core</module>
+				<module>recollect-core</module>
+				<module>validation-core</module>
+				<module>edm-transformations</module>
+				<module>custom-transformations</module>
+				<module>binding-core</module>
 			</modules>
 		</profile>
 		<profile>

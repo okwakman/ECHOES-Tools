@@ -6,11 +6,11 @@
 	<parent>
 		<groupId>org.csuc</groupId>
 		<artifactId>ECHOES-Tools</artifactId>
-		<version>1.3</version>
+		<version>${revision}</version>
 	</parent>
-	<version>1.3</version>
-	<artifactId>Custom-Transformations</artifactId>
-	<name>Custom-Transformations</name>
+	<version>${custom.transformations.version}</version>
+	<artifactId>custom-transformations</artifactId>
+	<name>custom-transformations</name>
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,8 +23,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.csuc</groupId>
-			<artifactId>Binding-Core</artifactId>
-			<version>1.3</version>
+			<artifactId>binding-core</artifactId>
+			<version>${binding.core.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.csuc</groupId>
