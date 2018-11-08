@@ -1,13 +1,15 @@
 language: java
 services: mongodb
 sudo: false
+cache:
+  directories:
+  - $HOME/.m2
 jdk:
 - oraclejdk8
-env:
-  - EDM=external
 before_install:
 - git submodule update --init --recursive
-script: mvn install -D$EDM -B -V
+- export TRAVIS_WORKER_MAX_LOG_LENGTH=40000000
+script: mvn install -q -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 notifications:
   email:
     recipients:
