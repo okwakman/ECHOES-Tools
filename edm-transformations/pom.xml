@@ -53,11 +53,6 @@
             <version>${metadata.schema.definitions.memorix.version}</version>
         </dependency>
 		<dependency>
-			<groupId>org.csuc</groupId>
-			<artifactId>metadata-schema-definitions-gene</artifactId>
-			<version>${metadata.schema.definitions.gene.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>eu.europeana.corelib</groupId>
 			<artifactId>corelib-edm-definitions</artifactId>
 		</dependency>

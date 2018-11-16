@@ -26,11 +26,6 @@
 			<artifactId>binding-core</artifactId>
 			<version>${binding.core.version}</version>
 		</dependency>
-		<!--<dependency>
-			<groupId>org.csuc</groupId>
-			<artifactId>metadata-schema-definitions-gene</artifactId>
-			<version>1.1</version>
-		</dependency>-->
 		<dependency>
 			<groupId>org.csuc</groupId>
 			<artifactId>metadata-schema-definitions-carare</artifactId>
