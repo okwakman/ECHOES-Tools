@@ -1,10 +1,12 @@
 package org.Custom.Transformations.formats.diba;
 
-import cat.gencat.*;
+import org.Custom.Transformations.formats.gene.common.*;
 import org.Custom.Transformations.core.Convertible;
 import org.Custom.Transformations.formats.gene.GENECSV;
 import org.Custom.Transformations.formats.gene.common.Comarca;
+import org.Custom.Transformations.formats.gene.common.Comarques;
 import org.Custom.Transformations.formats.gene.common.Municipi;
+import org.Custom.Transformations.formats.gene.common.Municipis;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,8 +29,8 @@ public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
     private HashMap<String, String> architectureColumnsMapping;
 
     public DIBACSV2GENECSV() {
-        municipis = new org.Custom.Transformations.formats.gene.common.MunicipiType();
-        comarques = new org.Custom.Transformations.formats.gene.common.ComarcaType();
+        municipis = new Municipis();
+        comarques = new Comarques();
         fillGeneralColumnsMapping();
         fillArcheologyStaticColumnsMapping();
         fillArcheologyColumnsMapping();
@@ -69,11 +71,11 @@ public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
             }
         }
         if (csvRecord.isSet("Segle")) {
-            Datacio datacio = getCronologiaFromSegle(csvRecord.get("Segle"), true);
-            if (!datacio.getCronologiaInicial().isEmpty()){
-                String epoca = getCronologiaValue(datacio.getCronologiaInicial().get(0));
-                if (!datacio.getCronologiaFinal().isEmpty()){
-                    epoca += " - " + getCronologiaValue(datacio.getCronologiaFinal().get(0));
+            List<List<String>> datacio = getCronologiaFromSegle(csvRecord.get("Segle"), true);
+            if (!datacio.get(0).isEmpty()){
+                String epoca = getCronologiaValue(datacio.get(0).get(0));
+                if (!datacio.get(1).isEmpty()){
+                    epoca += " - " + getCronologiaValue(datacio.get(1).get(0));
                 }
                 columns.put("Epoques", epoca);
             }
@@ -148,11 +150,11 @@ public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
         }
 
         if (csvRecord.isSet("Segle")) {
-            Datacio datacio = getCronologiaFromSegle(csvRecord.get("Segle"), false);
-            if (!datacio.getCronologiaInicial().isEmpty()){
-                String epoca = getCronologiaValue(datacio.getCronologiaInicial().get(0));
-                if (!datacio.getCronologiaFinal().isEmpty()){
-                    epoca += " - " + getCronologiaValue(datacio.getCronologiaFinal().get(0));
+            List<List<String>> datacio  = getCronologiaFromSegle(csvRecord.get("Segle"), false);
+            if (!datacio.get(0).isEmpty()){
+                String epoca = getCronologiaValue(datacio.get(0).get(0));
+                if (!datacio.get(1).isEmpty()){
+                    epoca += " - " + getCronologiaValue(datacio.get(1).get(0));
                 }
                 columns.put("Epoques", epoca);
             }
@@ -309,10 +311,14 @@ public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
         return null;
     }
 
-    private Datacio getCronologiaFromSegle(String segles, boolean isArchitecture) {
-        Datacio datacio = new Datacio();
+    private List<List<String>> getCronologiaFromSegle(String segles, boolean isArchitecture) {
         List<String> cronologies;
         List<String> cronologiesEpoca;
+        List<List<String>> ret = new ArrayList<List<String>>();
+        List<String> cronologiesInicials = new ArrayList<>();
+        List<String> cronologiesFinals = new ArrayList<>();
+        ret.add(cronologiesInicials);
+        ret.add(cronologiesFinals);
         if (isArchitecture) {
             cronologies = new ArrayList<>(Arrays.asList(getValues(CronologiaArquitectonicType.class)));
         } else {
@@ -331,28 +337,28 @@ public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
         for (String cronologia : cronologies) {
             if (normalizedEquals(cronologia, segleInici)) {
                 if (isArchitecture) {
-                    datacio.getCronologiaInicial().add(CronologiaArquitectonicType.fromValue(cronologia));
+                    cronologiesInicials.add(CronologiaArquitectonicType.fromValue(cronologia).value());
                 } else {
-                    datacio.getCronologiaInicial().add(CronologiaArqueologicType.fromValue(cronologia));
+                    cronologiesInicials.add(CronologiaArqueologicType.fromValue(cronologia).value());
                 }
             }
             if (normalizedEquals(cronologia, segleFi)) {
                 if (isArchitecture) {
-                    datacio.getCronologiaFinal().add(CronologiaArquitectonicType.fromValue(cronologia));
+                    cronologiesFinals.add(CronologiaArquitectonicType.fromValue(cronologia).value());
                 } else {
-                    datacio.getCronologiaFinal().add(CronologiaArqueologicType.fromValue(cronologia));
+                    cronologiesFinals.add(CronologiaArqueologicType.fromValue(cronologia).value());
                 }
             }
         }
         for (String cronologia : cronologiesEpoca) {
             if (normalizedEquals(cronologia, segleInici)) {
-                datacio.getCronologiaInicial().add(EstilEpocaType.fromValue(cronologia));
+                cronologiesInicials.add(EstilEpocaType.fromValue(cronologia).value());
             }
             if (normalizedEquals(cronologia, segleFi)) {
-                datacio.getCronologiaFinal().add(EstilEpocaType.fromValue(cronologia));
+                cronologiesFinals.add(EstilEpocaType.fromValue(cronologia).value());
             }
         }
-        return datacio;
+        return ret;
     }
 
     private int[] getAnys(String anys) {
@@ -369,18 +375,18 @@ public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
     }
 
     private String getCodiConservacio(String estatConservacio, boolean isArchitecture) {
-        String[] conservacions;
+        String[] conservacions = null;
         if (isArchitecture) {
             if (normalizedEquals(estatConservacio, "regular")) {
                 estatConservacio = "Mitjà";
             }
             conservacions = getNames(ConservacioEstatArquitectonicType.class);
-        } else {
-            conservacions = getNames(ConservacioEstatArqueologicType.class);
         }
-        for (String conservacio : conservacions) {
-            if (normalizedEquals(conservacio, estatConservacio)) {
-                return conservacio;
+        if (conservacions != null){
+            for (String conservacio : conservacions) {
+                if (normalizedEquals(conservacio, estatConservacio)) {
+                    return conservacio;
+                }
             }
         }
         return null;

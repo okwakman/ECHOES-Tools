@@ -3,7 +3,7 @@
  */
 package org.csuc.deserialize;
 
-import cat.gencat.RDF;
+import eu.carare.carareschema.CarareWrap;
 import isbn._1_931666_22_9.Ead;
 import nl.memorix_maior.api.rest._3.Memorix;
 import nl.mindbus.a2a.A2AType;
@@ -270,7 +270,7 @@ public class JaxbUnmarshal {
 			if(Objects.equals(type, Ead.class)) list.add(new StreamSource(Ead.class.getClassLoader().getResource("apeEAD.xsd").toExternalForm()));
 			if(Objects.equals(type, Memorix.class)) list.add(new StreamSource(Memorix.class.getClassLoader().getResource("MRX-API-ANY.xsd").toExternalForm()));
 			if(Objects.equals(type, OAIPMHtype.class)) list.add(new StreamSource(OAIPMHtype.class.getClassLoader().getResource("OAI-PMH.xsd").toExternalForm()));
-			if(Objects.equals(type, RDF.class)) list.add(new StreamSource(RDF.class.getClassLoader().getResource("GENE.xsd").toExternalForm()));
+			if(Objects.equals(type, CarareWrap.class)) list.add(new StreamSource(CarareWrap.class.getClassLoader().getResource("carare-v2.0.6.xsd").toExternalForm()));
 		});
 
 		Source[] schemaFiles = list.toArray(new Source[list.size()]);

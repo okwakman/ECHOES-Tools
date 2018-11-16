@@ -26,9 +26,14 @@
 			<artifactId>binding-core</artifactId>
 			<version>${binding.core.version}</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>org.csuc</groupId>
 			<artifactId>metadata-schema-definitions-gene</artifactId>
+			<version>1.1</version>
+		</dependency>-->
+		<dependency>
+			<groupId>org.csuc</groupId>
+			<artifactId>metadata-schema-definitions-carare</artifactId>
 			<version>1.1</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.sf.saxon/Saxon-HE -->
@@ -59,7 +64,7 @@
 			<artifactId>commons-csv</artifactId>
 			<version>1.5</version>
 		</dependency>
-	</dependencies>
+    </dependencies>
 	<build>
 		<plugins>
 			<plugin>
