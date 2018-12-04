@@ -216,6 +216,7 @@
 		<metadata.schema.definitions.memorix.version>1.1</metadata.schema.definitions.memorix.version>
 		<metadata.schema.definitions.oaidc.version>1.1</metadata.schema.definitions.oaidc.version>
 		<metadata.schema.definitions.oaipmh.version>1.1</metadata.schema.definitions.oaipmh.version>
+		<metadata.schema.definitions.carare.version>1.1</metadata.schema.definitions.carare.version>
 
 		<maven.surefire.plugin.version>2.22.0</maven.surefire.plugin.version>
 		<corelib.edm.definitions.version>2.6.6-SNAPSHOT</corelib.edm.definitions.version>

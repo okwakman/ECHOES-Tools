@@ -66,6 +66,11 @@
             <artifactId>metadata-schema-definitions-oaipmh</artifactId>
             <version>${metadata.schema.definitions.oaipmh.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.csuc</groupId>
+            <artifactId>metadata-schema-definitions-carare</artifactId>
+            <version>${metadata.schema.definitions.carare.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

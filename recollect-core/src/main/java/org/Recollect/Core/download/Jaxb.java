@@ -1,10 +1,12 @@
 package org.Recollect.Core.download;
 
+import eu.carare.carareschema.CarareWrap;
 import isbn._1_931666_22_9.Ead;
 import nl.memorix_maior.api.rest._3.Memorix;
 import nl.mindbus.a2a.A2AType;
 import org.EDM.Transformations.formats.EDM;
 import org.EDM.Transformations.formats.a2a.A2A2EDM;
+import org.EDM.Transformations.formats.carare.CARARE2EDM;
 import org.EDM.Transformations.formats.dc.DC2EDM;
 import org.EDM.Transformations.formats.ead.EAD2EDM;
 import org.EDM.Transformations.formats.memorix.MEMORIX2EDM;
@@ -116,7 +118,10 @@ public class Jaxb implements Download {
             new MEMORIX2EDM(record.getHeader().getIdentifier(), (Memorix) jaxbElement.getValue(), properties).transformation(outputStream, properties);
         } else if (schemaType.equals(SchemaType.EAD)) {
             new EAD2EDM(record.getHeader().getIdentifier(), (Ead) jaxbElement.getValue(), properties).transformation(outputStream, properties);
-        }else logger.info(String.format("%s Unknow MetadataType", record.getHeader().getIdentifier()));
+        } else if (schemaType.equals(SchemaType.CARARE)) {
+            new CARARE2EDM(record.getHeader().getIdentifier(), (CarareWrap) jaxbElement.getValue(), properties).transformation(outputStream, properties);
+        }
+        else logger.info(String.format("%s Unknow MetadataType", record.getHeader().getIdentifier()));
 
         return edm;
     }

@@ -27,11 +27,7 @@
 			<artifactId>binding-core</artifactId>
 			<version>${binding.core.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.csuc</groupId>
-			<artifactId>metadata-schema-definitions-oaipmh</artifactId>
-			<version>${metadata.schema.definitions.oaipmh.version}</version>
-		</dependency>
+
 		<dependency>
 			<groupId>org.csuc</groupId>
 			<artifactId>metadata-schema-definitions-oaidc</artifactId>
@@ -52,6 +48,11 @@
             <artifactId>metadata-schema-definitions-memorix</artifactId>
             <version>${metadata.schema.definitions.memorix.version}</version>
         </dependency>
+		<dependency>
+			<groupId>org.csuc</groupId>
+			<artifactId>metadata-schema-definitions-carare</artifactId>
+			<version>${metadata.schema.definitions.carare.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>eu.europeana.corelib</groupId>
 			<artifactId>corelib-edm-definitions</artifactId>
@@ -78,6 +79,12 @@
             <groupId>org.csuc</groupId>
             <artifactId>rdf-format</artifactId>
             <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.csuc</groupId>
+            <artifactId>metadata-schema-definitions-carare</artifactId>
+            <version>1.1</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 	<build>
