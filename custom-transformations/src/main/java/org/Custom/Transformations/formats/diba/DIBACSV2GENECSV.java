@@ -7,7 +7,7 @@ import org.Custom.Transformations.formats.gene.common.Comarca;
 import org.Custom.Transformations.formats.gene.common.Comarques;
 import org.Custom.Transformations.formats.gene.common.Municipi;
 import org.Custom.Transformations.formats.gene.common.Municipis;
-import org.apache.commons.csv.CSVRecord;
+import org.Custom.Transformations.formats.common.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -223,7 +223,7 @@ public class DIBACSV2GENECSV extends Convertible<DIBACSV, GENECSV> {
     private String DibaDataToGene(String dataOrigen){
         if (dataOrigen.isEmpty()) return "";
         DateTimeFormatter formatOrigen = DateTimeFormatter.ofPattern("MM/dd/yy H:mm:ss");
-        DateTimeFormatter formatDesti = DateTimeFormatter.ofPattern("dd/MM/yyyy[ H:mm]");
+        DateTimeFormatter formatDesti = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate date = LocalDate.parse(dataOrigen, formatOrigen);
         return date.format(formatDesti);
     }

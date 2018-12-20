@@ -11,13 +11,10 @@ import java.io.*;
 import java.nio.file.Files;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CSV implements Inputable, Outputable {
-    private String[] headers = new String[1];
-    private List<CSVRecord> recordsCSV = new ArrayList<>();
+    private Map<String, String> headers = new HashMap<>();
     private List<Iterable<String>> recordsStr = new ArrayList<>();
 
     @Override
@@ -34,14 +31,14 @@ public class CSV implements Inputable, Outputable {
         }
     }
 
-    private void load(Reader reader){
+    protected void load(Reader reader){
         try {
             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader().withSkipHeaderRecord());
-            this.recordsCSV = csvParser.getRecords();
-            for (CSVRecord record : this.recordsCSV){
+            List<CSVRecord> recordsCSV = csvParser.getRecords();
+            for (CSVRecord record : recordsCSV){
                 Map<String, String> valuesMap = record.toMap();
                 List<String> valuesList = new ArrayList<>();
-                for (String header : headers){
+                for (String header : getCSVHeaders()){
                     valuesList.add(valuesMap.get(header));
                 }
                 this.recordsStr.add(valuesList);
@@ -54,7 +51,7 @@ public class CSV implements Inputable, Outputable {
     @Override
     public void save(Path path) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(path);
-        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(headers));
+        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(getCSVHeaders()));
         for (Iterable<String> record : recordsStr){
             csvPrinter.printRecord(record);
         }
@@ -66,7 +63,7 @@ public class CSV implements Inputable, Outputable {
         StringWriter writer = new StringWriter();
         CSVPrinter csvPrinter;
         try {
-            csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(headers));
+            csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(getCSVHeaders()));
             for (Iterable<String> record : recordsStr){
                 csvPrinter.printRecord(record);
             }
@@ -77,25 +74,39 @@ public class CSV implements Inputable, Outputable {
         return writer.toString();
     }
 
-    protected void setHeader(String[] headers){
+    private String[] getCSVHeaders(){
+        Set<String> csvHeaders = new HashSet<>();
+        for (Map.Entry<String, String> entry : headers.entrySet()){
+            if (!entry.getValue().isEmpty()){
+                csvHeaders.add(entry.getValue());
+            } else {
+                csvHeaders.add(entry.getKey());
+            }
+        }
+        return csvHeaders.toArray(new String[0]);
+    }
+
+    protected void setHeader(Map headers){
         this.headers = headers;
+    }
+
+    protected void setHeader(String[] headers){
+        Arrays.stream(headers).forEach(h -> this.headers.put(h, h));
     }
 
     public void addRecord(Iterable<String> record){
         this.recordsStr.add(record);
     }
 
-    public List<CSVRecord> getRecords(){
+    public List<org.Custom.Transformations.formats.common.CSVRecord> getRecords(){
+        List<org.Custom.Transformations.formats.common.CSVRecord> records = new ArrayList<>();
         try {
-            CSVParser csvParser = CSVParser.parse(getString(), CSVFormat.DEFAULT.withHeader(headers).withSkipHeaderRecord());
-            return csvParser.getRecords();
+            CSVParser csvParser = CSVParser.parse(getString(), CSVFormat.DEFAULT.withHeader(getCSVHeaders()).withSkipHeaderRecord());
+            csvParser.getRecords().forEach(r -> records.add(new org.Custom.Transformations.formats.common.CSVRecord(headers, r)));
+            return records;
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
-
-    /*public List<CSVRecord> getOriginalRecords(){
-        return this.recordsCSV;
-    }*/
 }

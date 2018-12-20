@@ -4,9 +4,10 @@ package org.Custom.Transformations.formats.gene;
 import eu.carare.carareschema.*;
 import org.Custom.Transformations.core.Convertible;
 import org.Custom.Transformations.formats.gene.common.*;
-import org.apache.commons.csv.CSVRecord;
+import org.Custom.Transformations.formats.common.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
+import org.osgeo.proj4j.*;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -23,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
-    private static final String SEPARATOR = " // ";
+    public static final String SEPARATOR = " / ";
     private static final String CRONOLOGIA_SEPARATOR = " - ";
     private static final Pattern MUNICIPI_COMARCA_PATTERN = Pattern.compile("(.*)\\s+\\((.*)\\).*");
     private static final Pattern BCIN_PATTERN = Pattern.compile(".*BCIN \\((.*)\\).*");
@@ -60,23 +61,19 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
     }
 
     private XMLGregorianCalendar getDate(String dateStr) throws DatatypeConfigurationException {
-        //DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/yyyy[ H:mm]");
-        DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/y[ H:mm]");
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd[ H:mm:ss.SSS]");
         ZoneId zoneId = ZoneId.of("Europe/Madrid");
         GregorianCalendar cal;
-        /*try {
-            LocalDateTime formatDateTime = LocalDateTime.parse(dateStr, format);
-            cal = GregorianCalendar.from(formatDateTime.atZone(zoneId));
-        } catch (Exception ex){
-            LocalDate formatDate = LocalDate.parse(dateStr, format);
-            cal = GregorianCalendar.from(formatDate.atStartOfDay(zoneId));
-        }*/
         try {
             LocalDateTime formatDateTime = LocalDateTime.parse(dateStr, format);
             cal = GregorianCalendar.from(formatDateTime.atZone(zoneId));
-        } catch (Exception ex){
-            LocalDate formatDate = LocalDate.parse(dateStr, format);
-            cal = GregorianCalendar.from(formatDate.atStartOfDay(zoneId));
+        } catch (Exception ignored1){
+            try {
+                LocalDate formatDate = LocalDate.parse(dateStr, format);
+                cal = GregorianCalendar.from(formatDate.atStartOfDay(zoneId));
+            } catch (Exception ignored2){
+                return null;
+            }
         }
         return DatatypeFactory.newInstance().newXMLGregorianCalendar(cal);
     }
@@ -139,7 +136,7 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         return null;
     }
 
-    private Carare.HeritageAssetIdentification.Conditions getConditionsArqueologia(CSVRecord record){
+    private Carare.HeritageAssetIdentification.Conditions getConditions(CSVRecord record){
         if (strOrNull(record,"conservacio") != null){
             String conservacio = strOrNull(record,"conservacio");
             Carare.HeritageAssetIdentification.Conditions conditions = new Carare.HeritageAssetIdentification.Conditions();
@@ -160,18 +157,22 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         Carare.Activity activity = new Carare.Activity();
         Actors actors = new Actors();
         Actors.Name name = new Actors.Name();
-        if (strOrNull(record,"nom") != null){
-            name.setLang(language);
-            name.setValue(strOrNull(record,"nom"));
-        }
         String[] cognoms = this.getMultivaluedField(record, "cognoms");
         if (cognoms != null){
-            name.setValue(name.getValue() + " " + String.join(" ", cognoms));
+            name.setValue(String.join(" ", cognoms));
+        }
+        String[] nameMulti = this.getMultivaluedField(record, "nom");
+        if (nameMulti != null){
+            if (name.getValue() != null){
+                name.setValue(name.getValue() + ", " + String.join(" ", nameMulti));
+            } else {
+                name.setValue(String.join(" ", nameMulti));
+            }
         }
         if (name.getValue() != null){
+            name.setLang(language);
             actors.getName().add(name);
         }
-
         if (strOrNull(record,"funcio") != null){
             Actors.Roles roles = new Actors.Roles();
             roles.setLang(language);
@@ -181,18 +182,10 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         Temporal temporal = new Temporal();
         Temporal.TimeSpan timeSpan = new Temporal.TimeSpan();
         if (strOrNull(record,"any_inici") != null){
-            try {
-                timeSpan.getStartDate().add(getDate("01/01/" + strOrNull(record,"any_inici")).toString());
-            } catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
-            }
+            timeSpan.getStartDate().add(strOrNull(record,"any_inici") + "-01-01");
         }
         if (strOrNull(record,"any_fi") != null){
-            try {
-                timeSpan.getEndDate().add(getDate("01/01/" + strOrNull(record,"any_fi")).toString());
-            } catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
-            }
+            timeSpan.getEndDate().add(strOrNull(record,"any_fi") + "-01-01");
         }
         if (!timeSpan.getStartDate().isEmpty() || timeSpan.getEndDate().isEmpty()){
             temporal.getTimeSpan().add(timeSpan);
@@ -246,11 +239,15 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
             }
         }
         String BCIN = this.getBCIN(this.getMultivaluedField(record, "Proteccions"));
+        String BCIN2 = this.strOrNull(record, "Numero_bcin");
         String BCIL = this.getBCIL(this.getMultivaluedField(record, "Proteccions"));
         String BIC = strOrNull(record, "num_reg_estatal");
         String Proteccio = strOrNull(record, "tip_prot_legal");
         if (BCIN != null){
             designations.add(getDesignation(language, "BCIN", BCIN, null));
+        }
+        if (BCIN2 != null){
+            designations.add(getDesignation(language, "BCIN", BCIN2, null));
         }
         if (BCIL != null){
             designations.add(getDesignation(language, "BCIL", BCIL, null));
@@ -313,15 +310,20 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
 
     private HashSet<String> getMunicipiComarques(String municipi, List<String> comarques){
         List<String> municipi_comarques = new ArrayList<>();
-        String municipi_raw = StringEscapeUtils.unescapeXml(municipi);
-        municipi_comarques.add(getEnumValue(MunicipiType.class, municipi_raw).value());
-        if (comarques != null) {
-            for (String comarca : comarques) {
-                String comarca_raw = StringEscapeUtils.unescapeXml(comarca);
-                municipi_comarques.add(getEnumValue(ComarcaType.class, comarca_raw).value());
+        String municipi_raw = StringEscapeUtils.unescapeXml(municipi).split(",")[0];
+        try {
+            municipi_comarques.add(getEnumValue(MunicipiType.class, municipi_raw).value());
+            if (comarques != null) {
+                for (String comarca : comarques) {
+                    String comarca_raw = StringEscapeUtils.unescapeXml(comarca);
+                    municipi_comarques.add(getEnumValue(ComarcaType.class, comarca_raw).value());
+                }
             }
+        } catch (Exception ignored){
+
         }
         return new HashSet<>(municipi_comarques);
+
     }
 
     private Spatial getArqueologiaSpatial(CSVRecord record){
@@ -371,8 +373,13 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
             }
             if (strOrNull(record,"coor_utm_long") != null && strOrNull(record,"coor_utm_lat") != null){
                 Spatial.Geometry.Quickpoint quickPoint = new Spatial.Geometry.Quickpoint();
-                quickPoint.setX(new BigDecimal(strOrNull(record,"coor_utm_long").replace(",", ".")));
-                quickPoint.setY(new BigDecimal(strOrNull(record,"coor_utm_lat").replace(",", ".")));
+                BigDecimal x = new BigDecimal(strOrNull(record,"coor_utm_long").replace(",", "."));
+                BigDecimal y = new BigDecimal(strOrNull(record,"coor_utm_lat").replace(",", "."));
+                ProjCoordinate coords = UTMToWGS84(x.floatValue(), y.floatValue());
+                /*quickPoint.setX(x);
+                quickPoint.setY(y);*/
+                quickPoint.setX(new BigDecimal(coords.x));
+                quickPoint.setY(new BigDecimal(coords.y));
                 geometry.setQuickpoint(quickPoint);
             }
             spatial.setGeometry(geometry);
@@ -428,11 +435,21 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
             }
             if (strOrNull(record,"utm_x") != null && strOrNull(record,"utm_y") != null){
                 Spatial.Geometry.Quickpoint quickPoint = new Spatial.Geometry.Quickpoint();
-                quickPoint.setX(new BigDecimal(strOrNull(record,"utm_x").replace(",", ".")));
-                quickPoint.setY(new BigDecimal(strOrNull(record,"utm_y").replace(",", ".")));
+                BigDecimal x = new BigDecimal(strOrNull(record,"utm_x").replace(",", "."));
+                BigDecimal y = new BigDecimal(strOrNull(record,"utm_y").replace(",", "."));
+                ProjCoordinate coords = UTMToWGS84(x.floatValue(), y.floatValue());
+                /*quickPoint.setX(x);
+                quickPoint.setY(y);*/
+                quickPoint.setX(new BigDecimal(coords.x));
+                quickPoint.setY(new BigDecimal(coords.y));
                 geometry.setQuickpoint(quickPoint);
             }
             spatial.setGeometry(geometry);
+        }
+        if (strOrNull(record,"adreça") != null){
+            Address address = new Address();
+            address.setRoadName(strOrNull(record,"adreça"));
+            locationSet.setAddress(address);
         }
         spatial.setLocationSet(locationSet);
         return spatial;
@@ -446,20 +463,20 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         }
     }
 
-    private String getAltresNoms(CSVRecord record){
+    private String[] getAltresNoms(CSVRecord record){
         if (this.isArchitecture){
-            return strOrNull(record, "altres_noms");
+            return getMultivaluedField(record, "altres_noms");
         } else {
-            return strOrNull(record, "nom_altres");
+            return getMultivaluedField(record, "nom_altres");
         }
     }
 
     private Carare.HeritageAssetIdentification getHeritageAssetIdentification(CSVRecord record){
         Carare.HeritageAssetIdentification heritageAssetIdentification = new Carare.HeritageAssetIdentification();
-        if (!this.isArchitecture){
-            Carare.HeritageAssetIdentification.Conditions conditions = getConditionsArqueologia(record);
+        if (this.isArchitecture){
+            Carare.HeritageAssetIdentification.Conditions conditions = getConditions(record);
             if (conditions != null){
-                heritageAssetIdentification.getConditions().add(getConditionsArqueologia(record));
+                heritageAssetIdentification.getConditions().add(getConditions(record));
             }
         }
         heritageAssetIdentification.getDesignations().addAll(getDesignations(record));
@@ -474,18 +491,29 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
             heritageAssetIdentification.setCharacters(characters);
         }
         Appellation appellation = new Appellation();
-        Appellation.Name appellationName = new Appellation.Name();
+
         appellation.setId(getId(record));
-        appellationName.setValue(strOrNull(record,"nom_actual"));
-        appellationName.setLang(language);
-        appellationName.setPreferred(true);
-        appellation.getName().add(appellationName);
-        if (getAltresNoms(record) != null){
-            Appellation.Name appellationAltres = new Appellation.Name();
-            appellationAltres.setValue(getAltresNoms(record));
-            appellationAltres.setLang(language);
-            appellationAltres.setPreferred(false);
-            appellation.getName().add(appellationAltres);
+        String[] noms = getMultivaluedField(record, "nom_actual");
+        if (noms != null){
+            for (int i = 0; i < noms.length; i++) {
+                Appellation.Name appellationName = new Appellation.Name();
+                appellationName.setValue(noms[i]);
+                appellationName.setLang(language);
+                if (i == 0){
+                    appellationName.setPreferred(true);
+                }
+                appellation.getName().add(appellationName);
+            }
+        }
+        String[] altresNoms = getAltresNoms(record);
+        if (altresNoms != null){
+            for (String altraNom : altresNoms){
+                Appellation.Name appellationAltres = new Appellation.Name();
+                appellationAltres.setValue(altraNom);
+                appellationAltres.setLang(language);
+                appellationAltres.setPreferred(false);
+                appellation.getName().add(appellationAltres);
+            }
         }
         heritageAssetIdentification.getAppellation().add(appellation);
         if (strOrNull(record,"descripcio") != null){
@@ -553,7 +581,7 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
             }
         }
 
-        if (this.isArchitecture){
+        //if (this.isArchitecture){
             String[] usos = getMultivaluedField(record, "original_actual");
             if (usos != null){
                 for (String us : usos){
@@ -577,7 +605,7 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
                     characters.getHeritageAssetType().add(original);
                 }
             }
-        }
+        //}
         if (this.isArchitecture){
             String[] estils = getMultivaluedField(record, "cod_estil");
             if (estils != null){
@@ -620,33 +648,25 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
     }
 
     private Temporal getArqueologiaTemporal(CSVRecord record){
-        if (!hasSomeValue(record, new String[] {"Cronologies", "data_inici", "data_fi"})){
+        if (!hasSomeValue(record, new String[] {"Cronologies", "CRONO_INICI", "CRONO_FI", "data_inici", "data_fi"})){
             return null;
         }
         String[] anys_inici = this.getMultivaluedField(record, "data_inici");
         String[] anys_fi = this.getMultivaluedField(record, "data_fi");
-        String[] cronologies = this.getMultivaluedField(record, "Cronologies");
+        String[] cronologies = getCronologies(record);
         Temporal temporal = new Temporal();
 
         if (anys_inici != null || anys_fi != null){
             Temporal.TimeSpan timeSpan = new Temporal.TimeSpan();
             if (anys_inici != null){
                 for (String any_inici : anys_inici){
-                    try {
-                        timeSpan.getStartDate().add(getDate("01/01/" + any_inici).toString());
-                    } catch (DatatypeConfigurationException e) {
-                        e.printStackTrace();
-                    }
+                    timeSpan.getStartDate().add(any_inici + "-01-01");
                 }
             }
 
             if (anys_fi != null) {
                 for (String any_fi : anys_fi) {
-                    try {
-                        timeSpan.getEndDate().add(getDate("01/01/" + any_fi).toString());
-                    } catch (DatatypeConfigurationException e) {
-                        e.printStackTrace();
-                    }
+                    timeSpan.getEndDate().add(any_fi + "-01-01");
                 }
             }
             temporal.getTimeSpan().add(timeSpan);
@@ -713,34 +733,63 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         return null;
     }
 
+    private String[] getCronologies(CSVRecord record){
+        List<String> cronologies = new ArrayList<>();
+        if (hasSomeValue(record, new String[] {"CRONO_INICI", "CRONO_FI"})){
+            String[] cronologies_inicials = this.getMultivaluedField(record, "CRONO_INICI");
+            int cronologies_inicials_length = 0;
+            if (cronologies_inicials != null){
+                cronologies_inicials_length = cronologies_inicials.length;
+            }
+            String[] cronologies_finals = this.getMultivaluedField(record, "CRONO_FI");
+            int cronologies_finals_length = 0;
+            if (cronologies_finals != null){
+                cronologies_finals_length = cronologies_finals.length;
+            }
+
+            for (int i = 0; i < cronologies_inicials_length || i < cronologies_finals_length; i++){
+                String cronologia = "";
+                if (cronologies_inicials != null && i < cronologies_inicials_length && !cronologies_inicials[i].equals("NULL")){
+                    cronologia += cronologies_inicials[i];
+                }
+                if (cronologies_finals != null && i < cronologies_finals_length && !cronologies_finals[i].equals("NULL")){
+                    if (!cronologia.isEmpty()){
+                        cronologia += CRONOLOGIA_SEPARATOR;
+                    }
+                    cronologia += cronologies_finals[i];
+                }
+                if (!cronologia.isEmpty()){
+                    cronologies.add(cronologia);
+                }
+            }
+            return cronologies.toArray(new String[1]);
+        } else if (isArchitecture){
+            return this.getMultivaluedField(record, "Epoques");
+        } else {
+            return this.getMultivaluedField(record, "Cronologies");
+        }
+    }
+
     private Temporal getArquitecturaTemporal(CSVRecord record){
-        if (!hasSomeValue(record, new String[] {"Epoques", "data_inicial", "data_fi"})){
+        if (!hasSomeValue(record, new String[] {"Epoques", "CRONO_INICI", "CRONO_FI", "data_inicial", "data_fi"})){
             return null;
         }
         String[] anys_inici = this.getMultivaluedField(record, "data_inicial");
         String[] anys_fi = this.getMultivaluedField(record, "data_fi");
-        String[] cronologies = this.getMultivaluedField(record, "Epoques");
+        String[] cronologies = getCronologies(record);
         Temporal temporal = new Temporal();
 
         if (anys_inici != null || anys_fi != null){
             Temporal.TimeSpan timeSpan = new Temporal.TimeSpan();
             if (anys_inici != null){
                 for (String any_inici : anys_inici){
-                    try {
-                        timeSpan.getStartDate().add(getDate("01/01/" + any_inici).toString());
-                    } catch (DatatypeConfigurationException e) {
-                        e.printStackTrace();
-                    }
+                    timeSpan.getStartDate().add(any_inici + "-01-01");
                 }
             }
 
             if (anys_fi != null) {
                 for (String any_fi : anys_fi) {
-                    try {
-                        timeSpan.getEndDate().add(getDate("01/01/" + any_fi).toString());
-                    } catch (DatatypeConfigurationException e) {
-                        e.printStackTrace();
-                    }
+                    timeSpan.getEndDate().add(any_fi + "-01-01");
                 }
             }
             temporal.getTimeSpan().add(timeSpan);
@@ -832,6 +881,7 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         try {
             if (hasSomeValue(record, new String[] {"d_alta", "usr_alta"})){
                 if (strOrNull(record, "d_alta") != null){
+                    XMLGregorianCalendar a = getDate(strOrNull(record, "d_alta"));
                     creation.setDate(getDate(strOrNull(record, "d_alta")));
                 }
                 if (strOrNull(record, "usr_alta") != null && !strOrNull(record, "usr_alta").trim().isEmpty()){
@@ -880,6 +930,20 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         return collectionInformation;
     }
 
+    private ProjCoordinate UTMToWGS84(Float x, Float y){
+        CoordinateTransformFactory ctFactory = new CoordinateTransformFactory();
+        CRSFactory csFactory = new CRSFactory();
+        CoordinateReferenceSystem utm31 = csFactory.createFromName("EPSG:32631");
+        CoordinateReferenceSystem wgs = csFactory.createFromName("EPSG:4326");
+        CoordinateTransform trans = ctFactory.createTransform(utm31, wgs);
+        ProjCoordinate p1 = new ProjCoordinate();
+        ProjCoordinate p2 = new ProjCoordinate();
+        p1.x = x;
+        p1.y = y;
+        trans.transform(p1, p2);
+        return p2;
+    }
+
     @Override
     public CarareWrap convert(GENECSV src) {
         //this.provider = this.getParams().getOrDefault("provider", "GENE");
@@ -887,7 +951,8 @@ public class GENECSV2CARARE extends Convertible<GENECSV, CarareWrap> {
         this.isArchitecture = Boolean.parseBoolean(this.getParams().getOrDefault("isArchitecture", "true"));
         this.institutionName = this.getParams().getOrDefault("institutionName", "Generalitat de Catalunya");
         this.repositoryLocationName = this.getParams().getOrDefault("repositoryLocationName", "Generalitat de Catalunya");
-        this.spatialReferenceSystem = this.getParams().getOrDefault("spatialReferenceSystem", "EPSG:32631");
+        this.spatialReferenceSystem = this.getParams().getOrDefault("spatialReferenceSystem", "EPSG:4326");
+        this.getParams().getOrDefault("spatialReferenceSystem", "EPSG:4326");
         this.countryName = this.getParams().getOrDefault("countryName", "Espanya");
         this.rights = this.getParams().getOrDefault("rights", "La ©Generalitat de Catalunya permet la reutilització dels continguts i de les dades sempre que se citi la font i la data d'actualització, que no es desnaturalitzi la informació i que no es contradigui amb una llicència específica.");
         this.europeanaRights = this.getParams().getOrDefault("europeanaRights", "Copyright Not Evaluated (CNE)");

@@ -21,10 +21,10 @@ public class GENECSV2CARARETest {
 
     @Before
     public void setUp() throws Exception {
-        genecsv_arqui = new GENECSV();
-        genecsv_arqui.load(Paths.get(getClass().getClassLoader().getResource("gene/Extraccio_bens_Arquitectonic_29-06-2017_100.csv").toURI()));
-        genecsv_arque = new GENECSV();
-        genecsv_arque.load(Paths.get(getClass().getClassLoader().getResource("gene/Extraccio_bens_Arqueologics_29-06-2017_100.csv").toURI()));
+        genecsv_arqui = new DedupGENECSV();
+        genecsv_arqui.load(Paths.get(getClass().getClassLoader().getResource("gene/Arquitectura.csv").toURI()));
+        genecsv_arque = new DedupGENECSV();
+        genecsv_arque.load(Paths.get(getClass().getClassLoader().getResource("gene/Arqueologia.csv").toURI()));
     }
 
     @Test

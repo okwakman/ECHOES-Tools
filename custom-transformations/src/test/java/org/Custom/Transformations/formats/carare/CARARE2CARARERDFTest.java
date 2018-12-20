@@ -14,10 +14,10 @@ public class CARARE2CARARERDFTest {
 
     @Before
     public void setUp() {
-        File geneArquiCarareFile = new File(getClass().getClassLoader().getResource("carare/Extraccio_bens_Arqueologics_29-06-2017_100.xml").getFile());
+        File geneArquiCarareFile = new File(getClass().getClassLoader().getResource("carare/gene_carare_arqueologia.xml").getFile());
         JaxbUnmarshal carareArqui_unmarshall = new JaxbUnmarshal(geneArquiCarareFile, new Class[]{CarareWrap.class});
         geneCarareArqui = (CarareWrap) carareArqui_unmarshall.getObject();
-        File geneArqueCarareFile = new File(getClass().getClassLoader().getResource("carare/Extraccio_bens_Arquitectonic_29-06-2017_100.xml").getFile());
+        File geneArqueCarareFile = new File(getClass().getClassLoader().getResource("carare/gene_carare_arquitectura.xml").getFile());
         JaxbUnmarshal carareArque_unmarshall = new JaxbUnmarshal(geneArqueCarareFile, new Class[]{CarareWrap.class});
         geneCarareArque = (CarareWrap) carareArque_unmarshall.getObject();
         converter = new CARARE2CARARERDF();

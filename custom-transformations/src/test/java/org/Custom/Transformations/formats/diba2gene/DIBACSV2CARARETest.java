@@ -42,7 +42,7 @@ public class DIBACSV2CARARETest {
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);
         JaxbUnmarshal jaxbun = new JaxbUnmarshal(fis, new Class[]{CarareWrap.class});
-        tmp.deleteOnExit();
+        //tmp.deleteOnExit();
     }
 
     @Test
@@ -61,6 +61,6 @@ public class DIBACSV2CARARETest {
         jaxb.marshaller(fileOutputStream);
         FileInputStream fis = new FileInputStream(tmp);
         JaxbUnmarshal jaxbun = new JaxbUnmarshal(fis, new Class[]{CarareWrap.class});
-        tmp.deleteOnExit();
+        //tmp.deleteOnExit();
     }
 }
